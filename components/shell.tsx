@@ -10,7 +10,7 @@ export function Shell() {
           HarrierStone
         </Link>
         <nav className="flex items-center gap-5 text-sm">
-          <Link href="/" className="text-muted hover:text-ink">
+          <Link href="/rollouts" className="text-muted hover:text-ink">
             Rollouts
           </Link>
           <Link href="/studies/new" className="text-muted hover:text-ink">

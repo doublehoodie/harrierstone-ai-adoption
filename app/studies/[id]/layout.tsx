@@ -14,7 +14,7 @@ export default async function StudyLayout({ children, params }: { children: Reac
     <div className="study-frame">
       <div className="shell study-frame-inner">
         <div className="workspace-top no-print">
-          <Link href="/" className="crumb">
+          <Link href="/rollouts" className="crumb">
             Rollouts
           </Link>
           <div className="min-w-0">

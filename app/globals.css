@@ -76,6 +76,76 @@ body > header {
   color: var(--color-muted);
 }
 
+.landing {
+  max-width: 44rem;
+}
+
+.landing-block {
+  margin-top: 2.75rem;
+}
+
+.landing-block h2 {
+  font-size: 1.35rem;
+  font-weight: 640;
+  letter-spacing: -0.03em;
+  line-height: 1.25;
+}
+
+.landing-block > p {
+  margin-top: 0.55rem;
+  max-width: 40rem;
+  color: var(--color-muted);
+}
+
+.landing-steps {
+  list-style: none;
+  margin: 0.8rem 0 0;
+  padding: 0;
+}
+
+.landing-steps li {
+  display: grid;
+  grid-template-columns: 5.2rem minmax(0, 1fr);
+  gap: 0.85rem;
+  padding: 0.95rem 0;
+  border-top: 1px solid var(--color-line);
+}
+
+.landing-num {
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding-top: 0.2rem;
+}
+
+.landing-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+  margin-top: 0.9rem;
+}
+
+.landing-situation {
+  padding: 0.9rem 0;
+  border-top: 1px solid var(--color-line);
+}
+
+.landing-situation:first-child {
+  border-top: 0;
+  padding-top: 0.4rem;
+}
+
+.landing-outcomes {
+  list-style: none;
+}
+
+.landing-outcomes p {
+  margin: 0;
+  color: var(--color-muted);
+}
+
 .page-title {
   font-family: var(--font-serif);
   font-size: clamp(2rem, 4vw, 3.1rem);
@@ -985,7 +1055,8 @@ fieldset.stack {
   .grid-2,
   .facts,
   .stat-grid,
-  .dash-grid {
+  .dash-grid,
+  .landing-grid {
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -1008,6 +1079,11 @@ fieldset.stack {
 
   .study-shell > * {
     min-width: 0;
+  }
+
+  .landing-steps li {
+    grid-template-columns: 4.4rem minmax(0, 1fr);
+    gap: 0.65rem;
   }
 
   .study-nav {

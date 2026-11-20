@@ -6,8 +6,8 @@ export default function NotFound() {
       <h1 className="page-title">That page is not here</h1>
       <p className="lede">The study may have been deleted.</p>
       <p className="mt-6">
-        <Link href="/" className="btn">
-          Back to studies
+        <Link href="/rollouts" className="btn">
+          Back to rollouts
         </Link>
       </p>
     </div>
