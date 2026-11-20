@@ -20,7 +20,8 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   const on = connectedCount(workspace, sources.map((source) => source.id))
 
   return (
-    <div className="shell py-8">
+    <div className="study-frame">
+      <div className="shell study-frame-inner">
       <h1 className="screen-title">Settings</h1>
       <p className="screen-note">Workspace defaults, the sources a rollout can use, and the privacy floor.</p>
       <div className="settings-shell">
@@ -33,7 +34,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
             </Link>
           ))}
         </nav>
-        <div className="min-w-0">
+        <div className="study-content">
           {current === "general" && (
             <section className="card stack">
               <h2 className="font-semibold">General</h2>
@@ -50,6 +51,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
             <ConnectorList sources={sources} connections={workspace.connections} bulk />
           )}
         </div>
+      </div>
       </div>
     </div>
   )

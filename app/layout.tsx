@@ -21,7 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           Skip to content
         </a>
         <Shell />
-        <main id="main">{children}</main>
+        <main id="main" className="app-main">{children}</main>
       </body>
     </html>
   )

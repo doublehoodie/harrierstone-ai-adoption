@@ -1,4 +1,5 @@
 import { isPost, isPre } from "./dates"
+import { weekCounts, windowClosed } from "./progress"
 import { formatDelta, formatMoney, formatNumber, formatPct, formatRange, formatValue, plural } from "./format"
 import type {
   Arm,
@@ -215,6 +216,20 @@ export function analyze(study: Study): Report {
     rules.push("pretrend")
     reasons.push(preTrendNote)
   }
+  if (
+    study.metricsLocked &&
+    study.design.locked &&
+    primary?.did != null &&
+    !windowClosed(study) &&
+    !rules.includes("no_data")
+  ) {
+    const planned = study.design.plannedPostWeeks
+    const posted = weekCounts(study).post
+    rules.push("window_open")
+    reasons.push(
+      `The plan is ${planned} measurement weeks. ${posted} ${posted === 1 ? "is" : "are"} on file, so this is a reading so far.`,
+    )
+  }
 
   let decision: Decision = "inconclusive"
   if (rules.length === 0 && primary && primary.did != null && primary.ciLow != null && primary.ciHigh != null) {
@@ -295,7 +310,7 @@ export function analyze(study: Study): Report {
 
   return {
     decision,
-    title: TITLES[decision],
+    title: rules.includes("window_open") ? "Still measuring" : TITLES[decision],
     lede: ledeFor(primary, comparison),
     reasons,
     warnings,
@@ -342,6 +357,7 @@ function nextStepFor(decision: Decision, rules: string[]): string {
   if (rules.includes("metrics_unlocked")) return "Lock the metrics you will be willing to live with. That is the pre-registration."
   if (rules.includes("design_unlocked")) return "Lock the comparison before reading a result as a decision."
   if (rules.includes("no_data")) return "Capture at least four baseline weeks, lock the design, then measure."
+  if (rules.includes("window_open")) return "Keep the same metric. The decision waits until the planned weeks are in."
   if (rules.includes("underpowered")) return "Add teams or weeks until the smallest detectable change is no larger than the gain you care about. Until then, do not decide."
   if (rules.includes("amended") || rules.includes("retrospective")) {
     return "Start a new study if you want a keep, expand, or cut call. This one can only describe what already happened."

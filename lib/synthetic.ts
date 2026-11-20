@@ -1,4 +1,4 @@
-import { addDays, weeksFrom } from "./dates"
+import { addDays, daysBetween, mondayOf, todayISO, weeksFrom } from "./dates"
 import { gaussian, hashSeed, mulberry32 } from "./rng"
 import { addExtraRole, installOrg } from "./org"
 import { getTemplate } from "./templates"
@@ -96,9 +96,10 @@ export function fillBaseline(study: Study): void {
   study.origin.outcomes = "synthetic"
 }
 
-export function fillMeasurement(study: Study): void {
+export function fillMeasurement(study: Study, weeks?: number): void {
+  const count = weeks ?? (study.design.plannedPostWeeks || 8)
   const template = getTemplate(study.functionId)
-  const periods = weeksFrom(study.design.rolloutDate, study.design.plannedPostWeeks || 8)
+  const periods = weeksFrom(study.design.rolloutDate, count)
   const kept = study.outcomes.filter((point) => point.period < study.design.rolloutDate)
   const next = [...kept]
   for (const metric of template.metrics) {
@@ -122,7 +123,124 @@ export function fillMeasurement(study: Study): void {
   writeUsage(study, periods)
   writeAgent(study, periods)
   writeBands(study)
-  writePulse(study, "followup", periods[periods.length - 1] ?? study.design.rolloutDate)
+  if (count >= (study.design.plannedPostWeeks || count)) {
+    writePulse(study, "followup", periods[periods.length - 1] ?? study.design.rolloutDate)
+  }
+}
+
+const REPLY_RATE = [0, 0, 0.18, 0.33, 0.47]
+
+export function repliesFor(day: number, invited: number): number {
+  return Math.round(invited * (REPLY_RATE[day] ?? 0))
+}
+
+export function seatSnapshot(study: Study, index: number): { active: number; seats: number } | null {
+  if (study.investmentKind === "agent" || study.investmentKind === "training") return null
+  let active = 0
+  let seats = 0
+  for (const team of study.teams) {
+    if (team.arm !== "treatment") continue
+    const jitter = gaussian(mulberry32(hashSeed(`${team.id}:use:${index}`)))
+    const rate = Math.min(0.95, Math.max(0.35, 0.7 + jitter * 0.04))
+    active += Math.round(team.headcount * rate)
+    seats += team.headcount
+  }
+  if (seats === 0) return null
+  return { active, seats }
+}
+
+export function appendPostWeek(study: Study, index: number): void {
+  const period = addDays(study.design.rolloutDate, index * 7)
+  if (study.outcomes.some((point) => point.period === period)) return
+  const template = getTemplate(study.functionId)
+  for (const metric of template.metrics) {
+    if (!study.metrics.some((item) => item.id === metric.id)) continue
+    for (const team of study.teams) {
+      if (team.arm === "unassigned" || team.headcount < study.privacyFloor) continue
+      const shift = team.arm === "treatment" ? metric.demo.treatShift : metric.demo.controlShift
+      study.outcomes.push({
+        period,
+        teamId: team.id,
+        metricId: metric.id,
+        value: roundMetric(metric, draw(metric.demo.baseline + shift, metric.demo.noise, `${study.id}:${team.id}:${metric.id}:post:${index}`)),
+        n: team.headcount,
+      })
+    }
+  }
+  appendUsageWeek(study, period, index)
+  appendAgentWeek(study, period)
+  study.origin.outcomes = "synthetic"
+}
+
+function appendUsageWeek(study: Study, period: string, index: number): void {
+  if (study.investmentKind === "agent" || study.investmentKind === "training") return
+  const monthly = study.functionId === "sales" ? 65 : 39
+  study.usage = study.usage.filter((point) => point.period !== period)
+  for (const team of study.teams) {
+    if (team.arm !== "treatment") continue
+    const jitter = gaussian(mulberry32(hashSeed(`${team.id}:use:${index}`)))
+    const rate = Math.min(0.95, Math.max(0.35, 0.7 + jitter * 0.04))
+    study.usage.push({
+      period,
+      teamId: team.id,
+      activeUsers: Math.round(team.headcount * rate),
+      sessionsPerUser: Math.round((8 + jitter) * 10) / 10,
+      breadth: Math.round(Math.min(0.9, Math.max(0.2, 0.52 + jitter * 0.05)) * 100) / 100,
+      seatCost: Math.round(team.headcount * monthly * (12 / 52)),
+      tokenCost: Math.round(team.headcount * 2.1),
+    })
+  }
+  study.origin.usage = "synthetic"
+}
+
+function appendAgentWeek(study: Study, period: string): void {
+  if (study.investmentKind !== "agent" && study.investmentKind !== "mixed") return
+  const metric = study.metrics.find((item) => item.costDenominator)
+  if (!metric) return
+  const teams = study.teams.filter((team) => team.arm === "treatment")
+  if (teams.length === 0) return
+  study.agents = study.agents.filter((point) => point.period !== period)
+  for (const team of teams) {
+    study.agents.push({
+      period,
+      agent: study.tool || "Agent",
+      teamId: team.id,
+      spend: Math.round(1400 / teams.length),
+      units: team.headcount * 8,
+      metricId: metric.id,
+    })
+  }
+}
+
+/** File the next weekday of an open measurement week. The fifth filing closes that week onto the chart. */
+export function fileNextDay(study: Study): string {
+  const open = study.openWeek
+  if (!open) return "This rollout is not waiting on another file."
+  if (open.day >= 4) {
+    appendPostWeek(study, open.index)
+    const next = open.index + 1
+    if (next >= study.design.plannedPostWeeks) {
+      study.openWeek = undefined
+      return "That outcome file closed the last planned week. The decision can be read."
+    }
+    study.openWeek = {
+      period: addDays(study.design.rolloutDate, next * 7),
+      index: next,
+      day: 0,
+      invited: open.invited,
+      replies: 0,
+    }
+    return "That outcome file closed the week. It is now on the chart. The next week has not started arriving."
+  }
+  open.day += 1
+  open.replies = repliesFor(open.day, open.invited)
+  if (open.day >= 2 && open.invited > 0) {
+    writePulse(study, "followup", addDays(open.period, 1), open.replies / open.invited)
+  }
+  if (open.day === 1) return "Monday's seat file is in."
+  if (open.day === 2) return "The check-in went out to the first wave."
+  if (open.day === 3) return "More check-in replies came in."
+  return "Replies are still arriving. The outcome file has not closed the week."
 }
 
 export function writePulse(
@@ -285,6 +403,8 @@ interface DemoInput {
   expandIntoControl: boolean
   extraRoles?: { title: string; headcount: number }[]
   responseRate: number
+  /** Measurement weeks to store now. Omit to fill the whole planned window. */
+  postWeeks?: number
 }
 
 function buildDemo(input: DemoInput): Study {
@@ -318,15 +438,45 @@ function buildDemo(input: DemoInput): Study {
   study.design.lockedAt = addDays(input.rolloutDate, -14)
   study.design.retrospective = false
   study.noticePlanned = true
+  const weeks = input.postWeeks ?? study.design.plannedPostWeeks
   fillBaseline(study)
-  fillMeasurement(study)
+  fillMeasurement(study, weeks)
   writePulse(study, "baseline", addDays(input.rolloutDate, -7), input.responseRate)
-  writePulse(study, "followup", addDays(input.rolloutDate, 9 * 7), input.responseRate)
+  if (weeks >= study.design.plannedPostWeeks) {
+    writePulse(study, "followup", addDays(input.rolloutDate, (study.design.plannedPostWeeks - 1) * 7), input.responseRate)
+  } else {
+    const invited = study.teams.filter((team) => team.arm === "treatment").reduce((sum, team) => sum + team.headcount, 0)
+    const period = addDays(input.rolloutDate, weeks * 7)
+    const day = Math.max(0, Math.min(4, daysBetween(period, todayISO())))
+    study.openWeek = { period, index: weeks, day, invited, replies: repliesFor(day, invited) }
+    if (day >= 2 && invited > 0) writePulse(study, "followup", addDays(period, 1), study.openWeek.replies / invited)
+  }
   return study
 }
 
 export function buildDemos(): Study[] {
+  const liveMonday = mondayOf(todayISO())
   return [
+    buildDemo({
+      id: "meridian",
+      company: "Meridian",
+      name: "Cursor for platform engineering",
+      functionId: "engineering",
+      investmentKind: "seats",
+      tool: "Cursor",
+      summary: "Platform, product, and data engineering are in the first wave. Mobile, security, and reliability are held back. Ten weeks were planned. This week is still being filed.",
+      population: "Platform engineering",
+      owner: "VP Engineering",
+      rolloutDate: addDays(liveMonday, -4 * 7),
+      expandIntoControl: true,
+      extraRoles: [
+        { title: "Engineering Manager", headcount: 12 },
+        { title: "QA Engineer", headcount: 10 },
+        { title: "Developer Advocate", headcount: 4 },
+      ],
+      responseRate: 0.62,
+      postWeeks: 4,
+    }),
     buildDemo({
       id: "northwind",
       company: "Northwind Robotics",

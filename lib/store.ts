@@ -6,8 +6,8 @@ import { buildDemos } from "./synthetic"
 import type { Study } from "./types"
 import { normalizeWorkspace, type Workspace } from "./workspace"
 
-const VERSION = 1
-const DEMO_ORDER = ["northwind", "brightline", "halcyon", "lumen"]
+const VERSION = 2
+const DEMO_ORDER = ["meridian", "northwind", "brightline", "halcyon", "lumen"]
 
 interface DB {
   version: number
@@ -48,7 +48,8 @@ function writeDb(db: DB): void {
 
 export function readDb(): DB {
   noStore()
-  if (memory) return memory
+  if (memory?.version === VERSION) return memory
+  memory = null
   const file = writableFile()
   try {
     if (!file) throw new Error("No writable store")

@@ -140,6 +140,18 @@ export interface Amendment {
   what: "metrics" | "design"
 }
 
+/** A measurement week that is still being filed, one weekday at a time. */
+export interface OpenWeek {
+  /** Monday of the week being collected. */
+  period: string
+  /** Index in the measurement window, starting at 0. */
+  index: number
+  /** Weekdays already filed. 0–4. The next filing closes the week into the chart. */
+  day: number
+  invited: number
+  replies: number
+}
+
 export interface StudyDesign {
   type: "comparison" | "staggered" | "before_after"
   rolloutDate: string
@@ -181,6 +193,8 @@ export interface Study {
   registeredAt: string | null
 
   design: StudyDesign
+  /** Set while the current measurement week is still arriving day by day. */
+  openWeek?: OpenWeek
 
   outcomes: OutcomePoint[]
   usage: UsagePoint[]

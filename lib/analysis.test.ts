@@ -4,8 +4,9 @@ import { analyze, calculation } from "./analysis"
 import { parseCsv, parseOrgCsv, parseOutcomeCsv } from "./csv"
 import { weeksFrom } from "./dates"
 import { mapTitle } from "./ontology"
+import { weekCounts } from "./progress"
 import { blankStudy } from "./study"
-import { buildDemos } from "./synthetic"
+import { buildDemos, fileNextDay } from "./synthetic"
 import type { Metric, Study } from "./types"
 
 function metric(partial: Partial<Metric> & Pick<Metric, "id" | "name" | "direction" | "unit">): Metric {
@@ -184,6 +185,26 @@ describe("demo studies", () => {
 
   it("lumen cuts a flat win rate", () => {
     assert.equal(demos.lumen.decision, "cut", `${demos.lumen.lede} :: ${demos.lumen.reasons.join(" | ")}`)
+  })
+
+  it("meridian stays open until the planned weeks are in", () => {
+    assert.equal(demos.meridian.decision, "inconclusive", demos.meridian.reasons.join(" | "))
+    assert.ok(demos.meridian.rules.includes("window_open"), demos.meridian.reasons.join(" | "))
+    assert.equal(demos.meridian.title, "Still measuring")
+  })
+
+  it("files the open week onto the chart", () => {
+    const study = structuredClone(buildDemos().find((demo) => demo.id === "meridian"))
+    assert.ok(study?.openWeek)
+    study.openWeek.day = 4
+    const before = weekCounts(study).post
+    const index = study.openWeek.index
+    const note = fileNextDay(study)
+    assert.match(note, /closed the week/)
+    assert.equal(weekCounts(study).post, before + 1)
+    assert.equal(study.openWeek?.index, index + 1)
+    assert.equal(study.openWeek?.day, 0)
+    assert.equal(analyze(study).rules.includes("window_open"), true)
   })
 
   it("writes the same change the workbook repeats", () => {

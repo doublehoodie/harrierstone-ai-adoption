@@ -16,6 +16,19 @@ export function addDays(iso: string, days: number): string {
   return d.toISOString().slice(0, 10)
 }
 
+export function daysBetween(start: string, end: string): number {
+  const a = new Date(`${start}T00:00:00Z`).getTime()
+  const b = new Date(`${end}T00:00:00Z`).getTime()
+  return Math.round((b - a) / 86_400_000)
+}
+
+/** Monday of the week containing `iso`, in UTC. */
+export function mondayOf(iso: string): string {
+  const day = new Date(`${iso}T00:00:00Z`).getUTCDay()
+  const delta = day === 0 ? -6 : 1 - day
+  return addDays(iso, delta)
+}
+
 export function weeksFrom(start: string, count: number): string[] {
   return Array.from({ length: count }, (_, i) => addDays(start, i * 7))
 }

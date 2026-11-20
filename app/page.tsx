@@ -1,12 +1,15 @@
 import Link from "next/link"
 import { analyze } from "@/lib/analysis"
 import { ResetDemos } from "@/components/client"
-import { dataBadge, stage, weekCounts } from "@/lib/progress"
+import { WarRoom } from "@/components/war-room"
+import { dataBadge, liveLabel, stage, weekCounts } from "@/lib/progress"
 import { listStudies } from "@/lib/store"
 import { FUNCTION_LABEL } from "@/lib/templates"
 
 export default function HomePage() {
   const studies = listStudies()
+  const live = studies.find((study) => study.openWeek) ?? studies.find((study) => liveLabel(study))
+  const liveReport = live ? analyze(live) : null
   return (
     <div className="shell py-8">
       <div className="row justify-between">
@@ -18,6 +21,11 @@ export default function HomePage() {
           New rollout
         </Link>
       </div>
+      {live && liveReport && (
+        <div className="mt-6">
+          <WarRoom study={live} report={liveReport} home />
+        </div>
+      )}
       <div className="work-table-wrap mt-6">
         <table className="work">
           <thead>
@@ -34,7 +42,8 @@ export default function HomePage() {
               const report = analyze(study)
               const where = stage(study)
               const weeks = weekCounts(study)
-              const ready = report.primary?.did != null && study.metricsLocked && study.design.locked
+              const liveRow = Boolean(liveLabel(study))
+              const ready = !liveRow && report.primary?.did != null && study.metricsLocked && study.design.locked
               const badge = dataBadge(study)
               const tone = `status-dot ${where.tone}`
               return (
@@ -55,7 +64,7 @@ export default function HomePage() {
                       {weeks.pre} weeks before · {weeks.post} after
                     </span>
                   </td>
-                  <td className={ready ? `decision-${report.decision}` : "text-muted"}>{ready ? report.title : "Not yet"}</td>
+                  <td className={ready ? `decision-${report.decision}` : "text-muted"}>{liveRow ? "Still measuring" : ready ? report.title : "Not yet"}</td>
                   <td>
                     <span className="quiet">{badge.label}</span>
                   </td>

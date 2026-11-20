@@ -23,15 +23,30 @@
 }
 
 html {
+  height: 100%;
   scroll-behavior: smooth;
 }
 
 body {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background: var(--color-paper);
   color: var(--color-ink);
   font-family: var(--font-sans);
   font-size: 16px;
   line-height: 1.5;
+}
+
+body > header {
+  flex: none;
+}
+
+.app-main {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
 }
 
 ::selection {
@@ -173,19 +188,44 @@ table.work a:hover {
   padding: 1.15rem 1.25rem;
 }
 
+.study-frame {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.study-frame-inner {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding-top: 1.25rem;
+}
+
 .study-shell {
   display: grid;
   grid-template-columns: 210px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   gap: 2.5rem;
-  align-items: start;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.study-content {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding-bottom: 2.5rem;
 }
 
 .study-nav {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
-  position: sticky;
-  top: 1rem;
+  min-height: 0;
+  overflow: auto;
+  padding-bottom: 1.5rem;
 }
 
 .nav-link {
@@ -510,9 +550,12 @@ table.data tr:last-child td {
 .settings-shell {
   display: grid;
   grid-template-columns: 200px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   gap: 2rem;
-  margin-top: 1.5rem;
-  align-items: start;
+  margin-top: 1.25rem;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .settings-nav {
@@ -881,14 +924,68 @@ fieldset.stack {
   text-decoration: none;
 }
 
+.war-room {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: 1.5rem 2rem;
+  background: var(--color-card);
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  padding: 1.2rem 1.3rem;
+}
+
+.war-room h2 {
+  font-size: 1.25rem;
+  font-weight: 640;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.feed {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 22rem;
+  overflow: auto;
+}
+
+.feed li {
+  display: grid;
+  grid-template-columns: 7.2rem minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.55rem 0;
+  border-top: 1px solid var(--color-line);
+  font-size: 0.92rem;
+}
+
+.feed li:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.feed-when {
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
 @media (max-width: 860px) {
   .study-shell,
+  .settings-shell {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .war-room {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .home-grid,
   .grid-2,
   .facts,
   .stat-grid,
-  .dash-grid,
-  .settings-shell {
+  .dash-grid {
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -914,11 +1011,11 @@ fieldset.stack {
   }
 
   .study-nav {
-    position: static;
     flex-direction: row;
     min-width: 0;
     max-width: 100%;
     overflow-x: auto;
+    overflow-y: hidden;
     padding-bottom: 0.3rem;
   }
 
@@ -949,8 +1046,25 @@ fieldset.stack {
     display: none !important;
   }
 
+  html,
   body {
+    height: auto;
+    overflow: visible;
+  }
+
+  body {
+    display: block;
     background: white;
+  }
+
+  .app-main,
+  .study-frame,
+  .study-frame-inner,
+  .study-content,
+  .settings-shell {
+    height: auto !important;
+    overflow: visible !important;
+    display: block !important;
   }
 
   .shell {
@@ -959,6 +1073,8 @@ fieldset.stack {
 
   .study-shell {
     display: block;
+    height: auto !important;
+    overflow: visible !important;
   }
 
   .card,

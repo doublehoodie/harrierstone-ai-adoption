@@ -11,27 +11,29 @@ export default async function StudyLayout({ children, params }: { children: Reac
   const where = stage(study)
   const tone = `status-dot ${where.tone}`
   return (
-    <div className="shell py-6">
-      <div className="workspace-top no-print">
-        <Link href="/" className="crumb">
-          Rollouts
-        </Link>
-        <div className="min-w-0">
-          <p className="font-semibold leading-tight">{study.name}</p>
-          <p className="text-sm text-muted">
-            {study.company} · {study.tool}
-          </p>
+    <div className="study-frame">
+      <div className="shell study-frame-inner">
+        <div className="workspace-top no-print">
+          <Link href="/" className="crumb">
+            Rollouts
+          </Link>
+          <div className="min-w-0">
+            <p className="font-semibold leading-tight">{study.name}</p>
+            <p className="text-sm text-muted">
+              {study.company} · {study.tool}
+            </p>
+          </div>
+          <span className="status">
+            <span className={tone} />
+            {where.label}
+          </span>
         </div>
-        <span className="status">
-          <span className={tone} />
-          {where.label}
-        </span>
-      </div>
-      <div className="study-shell">
-        <div className="no-print">
-          <StudyNav steps={steps(study)} />
+        <div className="study-shell">
+          <div className="no-print">
+            <StudyNav steps={steps(study)} />
+          </div>
+          <div className="study-content">{children}</div>
         </div>
-        <div className="min-w-0">{children}</div>
       </div>
     </div>
   )

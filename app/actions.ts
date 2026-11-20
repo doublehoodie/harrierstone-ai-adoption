@@ -10,7 +10,7 @@ import { installOrg } from "@/lib/org"
 import { weekCounts } from "@/lib/progress"
 import type { ActionResult } from "@/lib/result"
 import { applyTemplateMetrics, blankStudy } from "@/lib/study"
-import { fillBaseline, fillMeasurement, loadSampleOrg, writePulse } from "@/lib/synthetic"
+import { fileNextDay, fillBaseline, fillMeasurement, loadSampleOrg, writePulse } from "@/lib/synthetic"
 import { getStudy, getWorkspace, removeStudy, resetDemos, saveStudy, saveWorkspace } from "@/lib/store"
 import { connectableSources } from "@/lib/connectors"
 import { normalizeWorkspace } from "@/lib/workspace"
@@ -497,4 +497,11 @@ export async function setAllConnections(connected: boolean): Promise<ActionResul
   saveWorkspace(workspace)
   refreshSettings()
   return { ok: true }
+}
+
+export async function receiveNextDay(studyId: string): Promise<ActionResult> {
+  return edit(studyId, (study) => {
+    if (!study.openWeek) return { ok: false, error: "This rollout is not waiting on another file." }
+    return { ok: true, warnings: [fileNextDay(study)] }
+  })
 }

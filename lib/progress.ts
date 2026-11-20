@@ -9,6 +9,21 @@ export interface StepState {
   hint: string
 }
 
+export function windowClosed(study: Study): boolean {
+  const planned = study.design.plannedPostWeeks
+  if (!planned) return false
+  return weekCounts(study).post >= planned
+}
+
+/** Label for a rollout that still has planned weeks outstanding. */
+export function liveLabel(study: Study): string | null {
+  if (!study.design.locked || windowClosed(study)) return null
+  const post = weekCounts(study).post
+  if (post === 0 && !study.openWeek) return null
+  const current = study.openWeek ? post + 1 : post
+  return `Week ${current} of ${study.design.plannedPostWeeks}`
+}
+
 export function weekCounts(study: Study): { pre: number; post: number } {
   const metricId = study.primaryMetricId
   if (!metricId) return { pre: 0, post: 0 }
@@ -86,8 +101,8 @@ export function steps(study: Study): StepState[] {
       id: "decide",
       href: `/studies/${id}/decide`,
       label: "Outcome",
-      done: study.metricsLocked && study.design.locked && weeks.pre >= 2 && weeks.post >= 2,
-      hint: "Keep, expand, or cut",
+      done: windowClosed(study) && study.metricsLocked && study.design.locked && weeks.pre >= 2 && weeks.post >= 2,
+      hint: liveLabel(study) ?? "Keep, expand, or cut",
     },
   ]
 }
@@ -102,9 +117,11 @@ export function dataBadge(study: Study): { label: string; tone: "demo" | "mixed"
 
 export function stage(study: Study): { label: string; tone: "good" | "warn" | "neutral" } {
   const weeks = weekCounts(study)
-  if (study.metricsLocked && study.design.locked && weeks.pre >= 2 && weeks.post >= 2) {
+  if (windowClosed(study) && study.metricsLocked && study.design.locked && weeks.pre >= 2 && weeks.post >= 2) {
     return { label: "Outcome ready", tone: "good" }
   }
+  const live = liveLabel(study)
+  if (live) return { label: live, tone: "warn" }
   if (study.design.locked) return { label: "Measuring", tone: "warn" }
   if (study.metricsLocked) return { label: "Set the groups", tone: "neutral" }
   if (study.roles.length > 0) return { label: "Choose metrics", tone: "neutral" }

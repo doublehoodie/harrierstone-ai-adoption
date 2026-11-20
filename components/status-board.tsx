@@ -2,8 +2,9 @@ import Link from "next/link"
 import type { Report } from "@/lib/analysis"
 import { ChartLegend, CompareChart } from "@/components/charts"
 import { DecisionBanner } from "@/components/decision-view"
+import { WarRoom } from "@/components/war-room"
 import { formatDelta, formatMoney, formatPct } from "@/lib/format"
-import type { StepState } from "@/lib/progress"
+import { liveLabel, type StepState } from "@/lib/progress"
 import type { Study } from "@/lib/types"
 
 export function StatusBoard({
@@ -20,7 +21,8 @@ export function StatusBoard({
   nextLabel: string
 }) {
   const primary = report.primary
-  const ready = primary?.did != null && study.metricsLocked && study.design.locked
+  const live = liveLabel(study)
+  const ready = !live && primary?.did != null && study.metricsLocked && study.design.locked
   const first = study.teams.filter((team) => team.arm === "treatment" && team.headcount >= study.privacyFloor)
   const held = study.teams.filter((team) => team.arm === "control" && team.headcount >= study.privacyFloor)
   const firstN = first.reduce((sum, team) => sum + team.headcount, 0)
@@ -60,6 +62,7 @@ export function StatusBoard({
         ))}
       </ol>
 
+      {live && <WarRoom study={study} report={report} />}
       {ready && <DecisionBanner report={report} study={study} />}
 
       <div className="stat-grid">
@@ -75,7 +78,7 @@ export function StatusBoard({
               ? "—"
               : `${formatDelta(primary.ciLow, primary.unit).replace(` ${primary.unit}`, "")} to ${formatDelta(primary.ciHigh, primary.unit).replace(` ${primary.unit}`, "")}`
           }
-          note={primary?.ciLow == null ? "Needs weeks before and after" : `95% range${primary.unit === "share" || primary.unit === "score" || primary.unit === "dollars" ? "" : `, ${primary.unit}`}`}
+          note={primary?.ciLow == null ? "Needs weeks before and after" : live ? "So far. The planned window is still open." : `95% range${primary.unit === "share" || primary.unit === "score" || primary.unit === "dollars" ? "" : `, ${primary.unit}`}`}
         />
         <Stat label="People" value={totalN ? String(totalN) : "—"} note={totalN ? `${firstN} first wave · ${heldN} held back` : "Groups not set"} />
         <Stat label="Spend" value={formatMoney(report.spend.total)} note={report.spend.activeRate == null ? "No usage yet" : `${formatPct(report.spend.activeRate)} of seats used`} />
@@ -85,6 +88,7 @@ export function StatusBoard({
         <section className="card stack">
           <div className="row justify-between">
             <h2 className="font-semibold">{primary?.name ?? "Primary metric"}</h2>
+            {live && <span className="text-sm text-muted">Closed weeks</span>}
             {primary && primary.series.some((point) => point.control != null) && <ChartLegend comparison />}
           </div>
           {primary && primary.series.length > 1 ? (
@@ -96,10 +100,22 @@ export function StatusBoard({
         <section className="card stack">
           <h2 className="font-semibold">Coverage</h2>
           <Meter label="History" detail={`${primary?.weeksPre ?? 0} weeks on file`} pct={historyPct} />
-          <Meter label="Since launch" detail={`${primary?.weeksPost ?? 0} of ${planned} planned weeks`} pct={measurePct} />
+          <Meter
+            label="Since launch"
+            detail={live ? `${primary?.weeksPost ?? 0} closed of ${planned}` : `${primary?.weeksPost ?? 0} of ${planned} planned weeks`}
+            pct={measurePct}
+          />
           <Meter label="First wave" detail={totalN ? `${firstN} people` : "Not set"} pct={totalN ? (firstN / totalN) * 100 : 0} />
-          {report.pulseResponseRate != null && (
-            <Meter label="Check-in replies" detail={formatPct(report.pulseResponseRate)} pct={report.pulseResponseRate * 100} />
+          {study.openWeek ? (
+            <Meter
+              label="This week's check-in"
+              detail={`${study.openWeek.replies} of ${study.openWeek.invited}`}
+              pct={study.openWeek.invited ? (study.openWeek.replies / study.openWeek.invited) * 100 : 0}
+            />
+          ) : (
+            report.pulseResponseRate != null && (
+              <Meter label="Check-in replies" detail={formatPct(report.pulseResponseRate)} pct={report.pulseResponseRate * 100} />
+            )
           )}
         </section>
       </div>
