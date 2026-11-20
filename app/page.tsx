@@ -54,9 +54,6 @@ export default function LandingPage() {
         <Link href="/rollouts" className="btn">
           Open the demo
         </Link>
-        <Link href="/studies/meridian" className="btn btn-ghost">
-          Watch a study in progress
-        </Link>
       </div>
 
       <section className="landing-block">
@@ -129,9 +126,6 @@ export default function LandingPage() {
         <div className="row mt-5">
           <Link href="/rollouts" className="btn">
             Open the demo
-          </Link>
-          <Link href="/studies/meridian" className="btn btn-ghost">
-            Watch a study in progress
           </Link>
         </div>
       </section>
