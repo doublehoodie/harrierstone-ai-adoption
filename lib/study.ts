@@ -61,6 +61,9 @@ export function blankStudy(input: {
     noticePlanned: false,
     amendments: [],
     origin: { org: "none", outcomes: "none", usage: "none", pulse: "none" },
+    sections: {},
+    wentLiveAt: null,
+    pausedAt: null,
   }
 }
 

@@ -1,6 +1,6 @@
 import { isPost, isPre } from "./dates"
 import { weekCounts, windowClosed } from "./progress"
-import { formatDelta, formatMoney, formatNumber, formatPct, formatRange, formatValue, plural } from "./format"
+import { formatChange, formatDelta, formatMoney, formatNumber, formatPct, formatRange, formatValue, plural } from "./format"
 import type {
   Arm,
   Confidence,
@@ -121,11 +121,9 @@ const SEGMENT_LABEL: Record<SegmentId, string> = {
   embedded: "Embedded",
 }
 
-const TITLES: Record<Decision, string> = {
-  expand: "Expand the rollout",
-  keep: "Keep it where it is",
-  cut: "Cut this investment",
-  inconclusive: "Don't decide from this study",
+function readingTitle(effect: Effect | null): string {
+  if (!effect || effect.did == null) return "Not enough on file"
+  return `${effect.name} is ${formatChange(effect.did, effect.unit)}`
 }
 
 export function analyze(study: Study): Report {
@@ -168,7 +166,7 @@ export function analyze(study: Study): Report {
 
   if (!study.metricsLocked) {
     rules.push("metrics_unlocked")
-    reasons.push("Metrics are not locked. Lock them before anyone treats this as a decision.")
+    reasons.push("The metrics are not confirmed yet.")
   }
   if (!study.design.locked) {
     rules.push("design_unlocked")
@@ -176,7 +174,7 @@ export function analyze(study: Study): Report {
   }
   if (!primaryMetric) {
     rules.push("no_primary")
-    reasons.push("Choose one primary metric. The decision hangs on a single outcome.")
+    reasons.push("No primary metric is chosen. The reading hangs on a single outcome.")
   }
   if (treatment.length === 0 || sumHead(treatment) < floor) {
     rules.push("no_treatment")
@@ -199,13 +197,13 @@ export function analyze(study: Study): Report {
   if (study.amendments.length > 0) {
     rules.push("amended")
     reasons.push(
-      "Metrics or the design changed after they were locked. The estimate below is exploratory and cannot support keep, expand, or cut.",
+      "Metrics or the design changed after they were locked. The estimate below is exploratory.",
     )
   }
   if (study.design.retrospective) {
     rules.push("retrospective")
     reasons.push(
-      "The design was locked after measurement-window data was already loaded. That is a retrospective look, not a pre-registered one, so it cannot support keep, expand, or cut.",
+      "The design was locked after measurement-window data was already loaded. That is a retrospective look, not a pre-registered one.",
     )
   }
   if (power && !power.adequate && !rules.includes("no_data")) {
@@ -241,7 +239,7 @@ export function analyze(study: Study): Report {
       decision = "cut"
       rules.push("unfavorable")
       reasons.push(
-        `${primary.name} moved the wrong way, and the 95% range does not include zero.`,
+        `${primary.name} moved the other way, and the 95% range does not include zero.`,
       )
     } else if (primary.detectable && primary.favorable && room) {
       decision = "expand"
@@ -253,7 +251,7 @@ export function analyze(study: Study): Report {
       decision = "keep"
       rules.push("favorable_keep")
       reasons.push(
-        `${primary.name} improved, and the 95% range does not include zero. The comparison group is not a candidate for this rollout, so this is not a reason to spread it.`,
+        `${primary.name} improved, and the 95% range does not include zero. The comparison group is not a candidate for this rollout.`,
       )
     } else if (primary.rulesOutPractical && spend.total > 0) {
       decision = "cut"
@@ -265,12 +263,12 @@ export function analyze(study: Study): Report {
       decision = "keep"
       rules.push("benefit_ruled_out_free")
       reasons.push(
-        "A gain of the size you said would matter sits outside the 95% range. There is no tool spend recorded, so leave it and do not spread it.",
+        "A gain of the size you said would matter sits outside the 95% range. There is no tool spend recorded.",
       )
     } else {
       rules.push("benefit_ambiguous")
       reasons.push(
-        "The 95% range includes no change and also includes a gain that would matter. That is not enough to keep, expand, or cut.",
+        "The 95% range includes no change and also includes a gain that would matter.",
       )
     }
   }
@@ -279,7 +277,7 @@ export function analyze(study: Study): Report {
   for (const effect of effects) {
     if (!effect.primary && effect.detectable && !effect.favorable) {
       warnings.push(
-        `${effect.name} moved the wrong way (${formatDelta(effect.did ?? 0, effect.unit)}). The decision follows the primary metric. Read this before you act.`,
+        `${effect.name} moved the other way (${formatDelta(effect.did ?? 0, effect.unit)}). The reading follows the primary metric.`,
       )
     }
   }
@@ -295,7 +293,7 @@ export function analyze(study: Study): Report {
     )
   }
   if (!baselinePulse && !study.pulseSkipped && study.metricsLocked) {
-    warnings.push("There is no baseline pulse, so employee experience is not in this decision.")
+    warnings.push("There is no baseline pulse, so employee experience is not in this reading.")
   }
   for (const wave of study.pulses) {
     for (const hidden of wave.suppressed) {
@@ -310,11 +308,11 @@ export function analyze(study: Study): Report {
 
   return {
     decision,
-    title: rules.includes("window_open") ? "Still measuring" : TITLES[decision],
+    title: rules.includes("window_open") ? "Still measuring" : readingTitle(primary),
     lede: ledeFor(primary, comparison),
     reasons,
     warnings,
-    nextStep: nextStepFor(decision, rules),
+    nextStep: nextStepFor(rules),
     rules,
     exploratory: rules.includes("amended") || rules.includes("retrospective"),
     comparison,
@@ -353,19 +351,29 @@ function ledeFor(effect: Effect | null, comparison: boolean): string {
   return text
 }
 
-function nextStepFor(decision: Decision, rules: string[]): string {
-  if (rules.includes("metrics_unlocked")) return "Lock the metrics you will be willing to live with. That is the pre-registration."
-  if (rules.includes("design_unlocked")) return "Lock the comparison before reading a result as a decision."
-  if (rules.includes("no_data")) return "Capture at least four baseline weeks, lock the design, then measure."
-  if (rules.includes("window_open")) return "Keep the same metric. The decision waits until the planned weeks are in."
-  if (rules.includes("underpowered")) return "Add teams or weeks until the smallest detectable change is no larger than the gain you care about. Until then, do not decide."
+function nextStepFor(rules: string[]): string {
+  if (rules.includes("metrics_unlocked")) return "The metrics are not confirmed yet."
+  if (rules.includes("design_unlocked")) return "The groups are not confirmed yet."
+  if (rules.includes("no_data")) return "There are not at least two weeks before and two weeks after on the primary metric."
+  if (rules.includes("window_open")) return "The planned weeks are not all on file. This is a reading so far."
+  if (rules.includes("underpowered")) return "The smallest change these groups can see is larger than the gain that was set as mattering."
   if (rules.includes("amended") || rules.includes("retrospective")) {
-    return "Start a new study if you want a keep, expand, or cut call. This one can only describe what already happened."
+    return "The metric or the groups changed after confirmation, or the groups were confirmed after measurement data was already in. This reading describes what is on file."
   }
-  if (decision === "expand") return "Roll the same tool out to the comparison group and keep the same primary metric."
-  if (decision === "keep") return "Leave the rollout where it is. Do not add seats or queues on the back of this result."
-  if (decision === "cut") return "Stop the spend. If a different outcome should matter, that is a new study with a new pre-registration."
-  return "Keep measuring, or widen the comparison. This window does not support a decision."
+  if (rules.includes("favorable_expand")) {
+    return "The primary metric moved in the agreed direction. The 95% range does not include zero. The comparison group has not received it."
+  }
+  if (rules.includes("favorable_keep")) {
+    return "The primary metric moved in the agreed direction. The 95% range does not include zero. The comparison group is not a candidate for this rollout."
+  }
+  if (rules.includes("unfavorable")) return "The primary metric moved the other way. The 95% range does not include zero."
+  if (rules.includes("benefit_ruled_out")) {
+    return "A gain of the size that was set as mattering sits outside the 95% range. Tool spend is on file."
+  }
+  if (rules.includes("benefit_ruled_out_free")) {
+    return "A gain of the size that was set as mattering sits outside the 95% range. No tool spend is on file."
+  }
+  return "The 95% range includes no change and also includes a gain of the size that was set as mattering."
 }
 
 function effectFor(

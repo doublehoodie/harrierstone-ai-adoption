@@ -90,7 +90,7 @@ export function saveStudy(study: Study): void {
 
 export function removeStudy(id: string): void {
   const db = readDb()
-  db.studies = db.studies.filter((study) => study.id !== id || study.demo)
+  db.studies = db.studies.filter((study) => study.id !== id)
   writeDb(db)
 }
 

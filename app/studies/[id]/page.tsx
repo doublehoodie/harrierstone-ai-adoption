@@ -16,7 +16,6 @@ export default async function OverviewPage({ params }: { params: Promise<{ id: s
     <StatusBoard
       study={study}
       report={report}
-      steps={flow}
       nextHref={collecting ? `/studies/${study.id}/measure` : next.href}
       nextLabel={collecting ? "Add this week's data" : next.done ? "Open the outcome" : `Continue · ${next.label}`}
     />

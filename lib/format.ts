@@ -28,6 +28,21 @@ export function formatValue(n: number, unit: string): string {
   return formatNumber(n)
 }
 
+export function formatChange(n: number, unit: string): string {
+  const delta = formatDelta(n, unit)
+  if (unit === "share" || unit === "score" || unit === "dollars") return delta
+  return `${delta} ${unit}`
+}
+
+/** Green when a finished reading clears in the agreed direction. Red when it clears the other way. */
+export function readingClass(
+  effect: { did: number | null; detectable: boolean; favorable: boolean } | null | undefined,
+  mark = true,
+): string {
+  if (!mark || !effect || effect.did == null || !effect.detectable) return ""
+  return effect.favorable ? "reading-up" : "reading-down"
+}
+
 export function formatDelta(n: number, unit: string): string {
   if (!Number.isFinite(n)) return "—"
   if (Math.abs(n) < 0.0005) return unit === "share" ? "0 pp" : "0"

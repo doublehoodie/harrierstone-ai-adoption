@@ -3,20 +3,18 @@ import type { Report } from "@/lib/analysis"
 import { ChartLegend, CompareChart } from "@/components/charts"
 import { DecisionBanner } from "@/components/decision-view"
 import { WarRoom } from "@/components/war-room"
-import { formatDelta, formatMoney, formatPct } from "@/lib/format"
-import { liveLabel, type StepState } from "@/lib/progress"
+import { formatChange, formatDelta, formatMoney, formatPct, readingClass } from "@/lib/format"
+import { liveLabel } from "@/lib/progress"
 import type { Study } from "@/lib/types"
 
 export function StatusBoard({
   study,
   report,
-  steps,
   nextHref,
   nextLabel,
 }: {
   study: Study
   report: Report
-  steps: StepState[]
   nextHref: string
   nextLabel: string
 }) {
@@ -52,24 +50,15 @@ export function StatusBoard({
         </div>
       </header>
 
-      <ol className="stepper">
-        {steps.map((step) => (
-          <li key={step.id} className={step.done ? "done" : ""}>
-            <Link href={step.href}>
-              <span>{step.label}</span>
-            </Link>
-          </li>
-        ))}
-      </ol>
-
       {live && <WarRoom study={study} report={report} />}
       {ready && <DecisionBanner report={report} study={study} />}
 
       <div className="stat-grid">
         <Stat
           label="Change"
-          value={primary?.did == null ? "—" : formatDelta(primary.did, primary.unit)}
+          value={primary?.did == null ? "—" : formatChange(primary.did, primary.unit)}
           note={primary?.name ?? "No metric yet"}
+          tone={readingClass(primary, report.decision !== "inconclusive")}
         />
         <Stat
           label="Range"
@@ -123,11 +112,11 @@ export function StatusBoard({
   )
 }
 
-function Stat({ label, value, note }: { label: string; value: string; note: string }) {
+function Stat({ label, value, note, tone = "" }: { label: string; value: string; note: string; tone?: string }) {
   return (
     <div className="stat">
       <p className="kicker">{label}</p>
-      <p className="stat-value">{value}</p>
+      <p className={`stat-value ${tone}`}>{value}</p>
       <p className="text-sm text-muted">{note}</p>
     </div>
   )

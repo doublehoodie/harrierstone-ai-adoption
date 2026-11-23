@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation"
 import { analyze } from "@/lib/analysis"
 import { DesignPanel } from "@/components/client"
+import { SectionActions } from "@/components/section-actions"
 import { isPre } from "@/lib/dates"
 import { formatValue } from "@/lib/format"
 import { weekCounts } from "@/lib/progress"
@@ -23,10 +24,11 @@ export default async function DesignPage({ params }: { params: Promise<{ id: str
   return (
     <div>
       <h1 className="screen-title">Who gets it first</h1>
-      <p className="screen-note">Hold some teams back, or give it to them in a later wave. That is what separates the rollout from everything else that changed in the same weeks. Giving it to everyone at once still records what happened, and it will not end in keep, expand, or cut.</p>
+      <p className="screen-note">Hold some teams back, or give it to them in a later wave. That is what separates the rollout from everything else that changed in the same weeks. Giving it to everyone at once still records what happened. Without a comparison group, the change cannot be separated from other things that changed in the same weeks.</p>
       {report.power && <div className="callout mt-6">{report.power.note}</div>}
       <div className="mt-6">
         <DesignPanel study={study} balance={balance} postAlreadyIn={weeks.post >= 2} />
+        <SectionActions studyId={study.id} section="design" />
       </div>
     </div>
   )

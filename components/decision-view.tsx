@@ -1,17 +1,16 @@
-import Link from "next/link"
 import type { Effect, Report } from "@/lib/analysis"
 import { ChartLegend, CompareChart } from "@/components/charts"
-import { formatDelta, formatMoney, formatPct, formatRange, formatValue, plural } from "@/lib/format"
+import { formatChange, formatDelta, formatMoney, formatPct, formatRange, formatValue, plural, readingClass } from "@/lib/format"
 import { FUNCTION_LABEL } from "@/lib/templates"
 import type { Study } from "@/lib/types"
 
 export function DecisionBanner({ report, study }: { report: Report; study: Study }) {
   return (
-    <section className={`banner banner-${report.decision}`}>
+    <section className="banner">
       <p className="kicker">
         {study.company} · {FUNCTION_LABEL[study.functionId]} · {study.tool}
       </p>
-      <h2 className={`decision-${report.decision}`}>{report.title}</h2>
+      <h2 className={readingClass(report.primary, report.decision !== "inconclusive")}>{report.title}</h2>
       <p className="max-w-3xl text-[1.05rem] leading-relaxed">{report.lede}</p>
       {report.reasons.length > 0 && (
         <ul className="mt-4 max-w-3xl list-disc space-y-1 pl-5 text-sm">
@@ -43,17 +42,17 @@ export function DecisionView({ study, report, reportPage = false }: { study: Stu
       {report.exploratory && (
         <div className="callout callout-warn">
           <p className="callout-title">Exploratory</p>
-          <p>The pre-registration was changed, or the design was locked after the measurement data was already in. Read the estimate. Do not treat the verb above as a decision.</p>
+          <p>The pre-registration was changed, or the design was locked after the measurement data was already in. The estimate describes what is on file.</p>
         </div>
       )}
         {study.demo && (
         <div className="callout">
-          <p>These are sample numbers. Replace them with your admin export or CSV before anyone acts on this.</p>
+          <p>These are sample numbers. Replace them with an admin export or CSV.</p>
         </div>
       )}
       {!study.demo && study.origin.outcomes === "synthetic" && (
         <div className="callout callout-warn">
-          <p>Some of these numbers are sample data. Replace them before you take this to a decision meeting.</p>
+          <p>Some of these numbers are sample data. Replace them with an admin export or CSV.</p>
         </div>
       )}
       {report.warnings.length > 0 && (
@@ -76,7 +75,7 @@ export function DecisionView({ study, report, reportPage = false }: { study: Stu
           <>
             <ChartLegend comparison={report.comparison && primary.series.some((point) => point.control != null)} />
             <CompareChart series={primary.series} unit={primary.unit} rollout={study.design.rolloutDate} />
-            <EffectTable effects={[primary]} />
+            <EffectTable effects={[primary]} mark={report.decision !== "inconclusive"} />
             <p className="text-sm text-muted">{primary.note}</p>
           </>
         ) : (
@@ -87,9 +86,9 @@ export function DecisionView({ study, report, reportPage = false }: { study: Stu
       {report.effects.length > 1 && (
         <section>
           <h3 className="section-title">The other metrics</h3>
-          <p className="mb-3 max-w-3xl text-sm text-muted">The recommendation follows the metric you agreed. Read these before you act. A bad movement here does not change the recommendation by itself.</p>
+          <p className="mb-3 max-w-3xl text-sm text-muted">The agreed metric is the one in the reading above. These are the other metrics on file.</p>
           <div className="card">
-            <EffectTable effects={report.effects.filter((effect) => !effect.primary)} />
+            <EffectTable effects={report.effects.filter((effect) => !effect.primary)} mark={report.decision !== "inconclusive"} />
           </div>
         </section>
       )}
@@ -186,7 +185,7 @@ export function DecisionView({ study, report, reportPage = false }: { study: Stu
       </section>
 
       <section id="operations">
-        <h3 className="section-title">What to do next</h3>
+        <h3 className="section-title">Reading</h3>
         <div className="card stack">
           <p>{report.nextStep}</p>
           <p className="text-sm text-muted">Same numbers for everyone in the room. People look at adoption. Finance looks at cost. Operations looks at whether the work moved.</p>
@@ -238,27 +237,11 @@ export function DecisionView({ study, report, reportPage = false }: { study: Stu
         </section>
       )}
 
-      <details className="text-sm leading-relaxed text-muted">
-        <summary className="cursor-pointer font-semibold text-ink">How this was calculated</summary>
-        <div className="stack mt-3">
-          <p>
-            The number is the first wave&apos;s change minus the held-back group&apos;s change over the same weeks. Each week counts equally. Inside a week, each team counts by the number of observations on that row. A row under the privacy floor is left out, and a week is left out when the included observations add up to less than the floor. The range is how much those weekly results bounced. It is not proof the tool caused the change.
-          </p>
-          <p>
-            The recommendation is withheld when the metric or the groups were changed after you confirmed them, when everyone got it at once, when the range still includes both “nothing” and “an improvement that would matter,” or when the groups are too small to see that improvement. Groups under {study.privacyFloor} are hidden before any of this runs.
-          </p>
-          {report.power && <p>{report.power.note}</p>}
-          <p>The short check-in uses the same four questions every time. It does not decide the rollout.</p>
-          <p>
-            <Link href={`/notice/${study.id}`}>Employee notice</Link>
-          </p>
-        </div>
-      </details>
     </div>
   )
 }
 
-function EffectTable({ effects }: { effects: Effect[] }) {
+function EffectTable({ effects, mark }: { effects: Effect[]; mark: boolean }) {
   return (
     <table className="data">
       <thead>
@@ -276,7 +259,7 @@ function EffectTable({ effects }: { effects: Effect[] }) {
               {effect.name}
               {effect.primary && <span className="pill pill-teal ml-2">Primary</span>}
             </td>
-            <td className="num">{effect.did == null ? "—" : unitDelta(effect.did, effect.unit)}</td>
+            <td className={`num ${readingClass(effect, mark)}`}>{effect.did == null ? "—" : formatChange(effect.did, effect.unit)}</td>
             <td className="num">{effect.ciLow == null || effect.ciHigh == null ? "—" : formatRange(effect.ciLow, effect.ciHigh, effect.unit)}</td>
             <td>{readEffect(effect)}</td>
           </tr>
@@ -286,16 +269,10 @@ function EffectTable({ effects }: { effects: Effect[] }) {
   )
 }
 
-function unitDelta(value: number, unit: string): string {
-  const delta = formatDelta(value, unit)
-  if (unit === "share" || unit === "score" || unit === "dollars") return delta
-  return `${delta} ${unit}`
-}
-
 function readEffect(effect: Effect): string {
   if (effect.did == null) return "Not enough weeks"
-  if (!effect.detectable) return "No detectable change"
-  return effect.favorable ? "Improved" : "Moved the wrong way"
+  if (!effect.detectable) return "Range includes no change"
+  return effect.favorable ? "Agreed direction" : "Other direction"
 }
 
 function Confidence({ confidence }: { confidence: Effect["confidence"] }) {

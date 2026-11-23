@@ -2,9 +2,10 @@ import Link from "next/link"
 import { analyze, type Report } from "@/lib/analysis"
 import { ChartLegend, CompareChart } from "@/components/charts"
 import { ResetDemos } from "@/components/client"
+import { StudyMenu } from "@/components/study-menu"
 import { WarRoom } from "@/components/war-room"
-import { formatDelta } from "@/lib/format"
-import { dataBadge, liveLabel, stage, weekCounts } from "@/lib/progress"
+import { formatChange, readingClass } from "@/lib/format"
+import { liveLabel, rolloutPhase, rolloutWindow, stage } from "@/lib/progress"
 import { listStudies } from "@/lib/store"
 import { FUNCTION_LABEL } from "@/lib/templates"
 import type { Study } from "@/lib/types"
@@ -36,19 +37,24 @@ export default async function RolloutsPage({ searchParams }: { searchParams: Pro
           <nav className="study-nav" aria-label="Studies">
             {studies.map((study) => {
               const where = stage(study)
-              const mark = liveLabel(study)
+              const phase = rolloutPhase(study)
               const active = study.id === selected?.id
+              const flag = phase === "ended" ? "Ended" : phase === "paused" ? "Paused" : phase === "live" ? "Live" : where.label
+              const tone = phase === "ended" ? "ended" : phase === "paused" ? "warn" : phase === "live" ? "good" : where.tone
               return (
-                <Link key={study.id} href={`/rollouts?study=${study.id}`} className={active ? "study-pick active" : "study-pick"} aria-current={active ? "page" : undefined}>
-                  <span className="status">
-                    <span className={`status-dot ${mark ? "warn" : where.tone}`} />
-                    {mark ? "Live" : where.label}
-                  </span>
-                  <span className="study-pick-name">{study.name}</span>
-                  <span className="study-pick-meta">
-                    {study.company} · {FUNCTION_LABEL[study.functionId]}
-                  </span>
-                </Link>
+                <div key={study.id} className={active ? "study-pick active" : "study-pick"}>
+                  <Link href={`/rollouts?study=${study.id}`} className="study-pick-link" aria-current={active ? "page" : undefined}>
+                    <span className="status">
+                      <span className={`status-dot ${tone}`} />
+                      {flag}
+                    </span>
+                    <span className="study-pick-name">{study.name}</span>
+                    <span className="study-pick-meta">
+                      {study.company} · {FUNCTION_LABEL[study.functionId]}
+                    </span>
+                  </Link>
+                  <StudyMenu studyId={study.id} name={study.name} phase={phase} canDelete />
+                </div>
               )
             })}
             <div className="mt-4">
@@ -76,22 +82,15 @@ export default async function RolloutsPage({ searchParams }: { searchParams: Pro
 
 function FinishedStudy({ study, report }: { study: Study; report: Report }) {
   const primary = report.primary
-  const weeks = weekCounts(study)
-  const ready = primary?.did != null && study.metricsLocked && study.design.locked
-  const where = stage(study)
-  const badge = dataBadge(study)
+  const when = rolloutWindow(study)
   return (
     <section className="card stack">
       <p className="kicker">{study.company}</p>
       <h2 className="screen-title">{study.name}</h2>
-      <p className="text-sm text-muted">
-        {study.tool} · {weeks.pre} weeks before · {weeks.post} after · {badge.label}
-      </p>
-      <p className={ready ? `decision-${report.decision}` : "text-muted"}>{ready ? report.title : where.label}</p>
+      {when ? <p className="text-sm text-muted">{when}</p> : null}
       {primary?.did != null && (
-        <p>
-          {primary.name} is {formatDelta(primary.did, primary.unit)}
-          {primary.unit === "share" || primary.unit === "score" || primary.unit === "dollars" ? "" : ` ${primary.unit}`}.
+        <p className={readingClass(primary, report.decision !== "inconclusive")}>
+          {primary.name} is {formatChange(primary.did, primary.unit)}.
         </p>
       )}
       <Link href={`/studies/${study.id}`} className="btn">

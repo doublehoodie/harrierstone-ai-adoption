@@ -7,7 +7,7 @@ import { parseAgentCsv, parseOrgCsv, parseOutcomeCsv, parseSpendCsv, parseUsageC
 import { todayISO } from "@/lib/dates"
 import { occupation } from "@/lib/ontology"
 import { installOrg } from "@/lib/org"
-import { weekCounts } from "@/lib/progress"
+import { rolloutFinished, weekCounts } from "@/lib/progress"
 import type { ActionResult } from "@/lib/result"
 import { applyTemplateMetrics, blankStudy } from "@/lib/study"
 import { fileNextDay, fillBaseline, fillMeasurement, loadSampleOrg, writePulse } from "@/lib/synthetic"
@@ -17,7 +17,7 @@ import { getStudy, getWorkspace, removeStudy, resetDemos, saveStudy, saveWorkspa
 import { connectableSources } from "@/lib/connectors"
 import { normalizeWorkspace } from "@/lib/workspace"
 import { templateMetric, toMetric } from "@/lib/templates"
-import type { Arm, FunctionId, InvestmentKind, Study, StudyDesign } from "@/lib/types"
+import { SECTION_IDS, type Arm, type FunctionId, type InvestmentKind, type SectionId, type Study, type StudyDesign } from "@/lib/types"
 
 const FUNCTIONS: FunctionId[] = ["hr", "engineering", "support", "sales", "finance", "marketing"]
 const KINDS: InvestmentKind[] = ["seats", "agent", "training", "mixed"]
@@ -256,12 +256,19 @@ export async function amendStudy(_prev: ActionResult | null, formData: FormData)
       study.design.retrospective = false
     }
     study.amendments.push({ at: new Date().toISOString(), what, note })
-    return { ok: true, warnings: ["This study can no longer support a keep, expand, or cut decision."] }
+    return { ok: true, warnings: ["This study is now exploratory. The estimate describes what is on file."] }
   })
+}
+
+function paused(study: Study): ActionResult | null {
+  if (!study.pausedAt) return null
+  return { ok: false, error: "Collection is paused. Resume it from the rollout settings." }
 }
 
 export async function uploadOutcomes(studyId: string, csv: string): Promise<ActionResult> {
   return edit(studyId, (study) => {
+    const held = paused(study)
+    if (held) return held
     const parsed = parseOutcomeCsv(csv, study)
     if (parsed.points.length === 0) return { ok: false, error: parsed.errors[0] ?? "No outcome rows were usable." }
     const map = new Map(study.outcomes.map((point) => [`${point.period}|${point.teamId}|${point.metricId}`, point]))
@@ -283,6 +290,8 @@ export async function generateBaseline(studyId: string): Promise<ActionResult> {
 
 export async function launchPulse(studyId: string, channel: "email" | "slack"): Promise<ActionResult> {
   return edit(studyId, (study) => {
+    const held = paused(study)
+    if (held) return held
     if (study.teams.length === 0) return { ok: false, error: "Import an org before sending a pulse." }
     const kind = study.pulses.some((wave) => wave.kind === "baseline") ? "followup" : "baseline"
     writePulse(study, kind, todayISO(), 0.58, channel)
@@ -362,7 +371,7 @@ export async function lockDesign(studyId: string): Promise<ActionResult> {
     const control = study.teams.filter((team) => team.arm === "control").reduce((sum, team) => sum + team.headcount, 0)
     if (treatment < floor) return { ok: false, error: `The rollout group needs at least ${floor} people.` }
     if (study.design.type !== "before_after" && control < floor) {
-      return { ok: false, error: `The comparison group needs at least ${floor} people. A before/after is allowed, and it will not support a decision.` }
+      return { ok: false, error: `The comparison group needs at least ${floor} people. A before/after is allowed, and it cannot separate the rollout from other changes.` }
     }
     const weeks = weekCounts(study)
     if (weeks.pre < 4) return { ok: false, error: "Need at least four baseline weeks on the primary metric before locking." }
@@ -373,13 +382,15 @@ export async function lockDesign(studyId: string): Promise<ActionResult> {
     study.design.locked = true
     study.design.lockedAt = new Date().toISOString()
     if (study.design.retrospective) {
-      return { ok: true, warnings: ["Measurement data was already loaded, so this lock is retrospective. It will not produce a keep, expand, or cut decision."] }
+      return { ok: true, warnings: ["Measurement data was already loaded, so this lock is retrospective. The estimate describes what is on file."] }
     }
   })
 }
 
 export async function uploadUsage(studyId: string, csv: string): Promise<ActionResult> {
   return edit(studyId, (study) => {
+    const held = paused(study)
+    if (held) return held
     const parsed = parseUsageCsv(csv, study)
     if (parsed.points.length === 0) return { ok: false, error: parsed.errors[0] ?? "No usage rows were usable." }
     study.usage = parsed.points
@@ -390,6 +401,8 @@ export async function uploadUsage(studyId: string, csv: string): Promise<ActionR
 
 export async function uploadSpend(studyId: string, csv: string): Promise<ActionResult> {
   return edit(studyId, (study) => {
+    const held = paused(study)
+    if (held) return held
     const parsed = parseSpendCsv(csv, study)
     if (parsed.points.length === 0 && parsed.other === 0) return { ok: false, error: parsed.errors[0] ?? "No spend rows were usable." }
     for (const point of study.usage) {
@@ -411,6 +424,8 @@ export async function uploadSpend(studyId: string, csv: string): Promise<ActionR
 
 export async function uploadAgents(studyId: string, csv: string): Promise<ActionResult> {
   return edit(studyId, (study) => {
+    const held = paused(study)
+    if (held) return held
     const parsed = parseAgentCsv(csv, study)
     if (parsed.points.length === 0) return { ok: false, error: parsed.errors[0] ?? "No agent rows were usable." }
     study.agents = parsed.points
@@ -421,6 +436,8 @@ export async function uploadAgents(studyId: string, csv: string): Promise<Action
 
 export async function generateMeasurement(studyId: string): Promise<ActionResult> {
   return edit(studyId, (study) => {
+    const held = paused(study)
+    if (held) return held
     if (!study.design.locked) return { ok: false, error: "Lock the design before generating the measurement window. Otherwise it is too easy to rebuild the chart." }
     if (!study.teams.some((team) => team.arm === "treatment")) return { ok: false, error: "Assign a rollout group first." }
     fillMeasurement(study)
@@ -440,12 +457,12 @@ export async function setAssumptions(_prev: ActionResult | null, formData: FormD
   })
 }
 
-export async function deleteStudy(studyId: string): Promise<void> {
+export async function deleteStudy(studyId: string, phrase: string): Promise<void> {
   const study = getStudy(studyId)
-  if (!study || study.demo) return
+  if (!study || phrase !== study.name) return
   removeStudy(studyId)
   refresh()
-  redirect("/")
+  redirect("/rollouts")
 }
 
 export async function resetDemoStudies(): Promise<ActionResult> {
@@ -530,8 +547,53 @@ export async function confirmKestrel(plan: Gameplan): Promise<ActionResult> {
   redirect(`/studies/${study.id}`)
 }
 
+function sectionRecord(study: Study): NonNullable<Study["sections"]> {
+  if (!study.sections) {
+    study.sections = study.demo ? Object.fromEntries(SECTION_IDS.map((id) => [id, "done"])) : {}
+  }
+  return study.sections
+}
+
+export async function saveSection(studyId: string, section: SectionId): Promise<ActionResult> {
+  if (!SECTION_IDS.includes(section)) return { ok: false, error: "Unknown section." }
+  return edit(studyId, (study) => {
+    sectionRecord(study)[section] = "saved"
+  })
+}
+
+export async function markSectionDone(studyId: string, section: SectionId): Promise<ActionResult> {
+  if (!SECTION_IDS.includes(section)) return { ok: false, error: "Unknown section." }
+  return edit(studyId, (study) => {
+    sectionRecord(study)[section] = "done"
+  })
+}
+
+export async function goLive(studyId: string): Promise<ActionResult> {
+  return edit(studyId, (study) => {
+    if (rolloutFinished(study)) return { ok: false, error: "This rollout has ended." }
+    if (!study.wentLiveAt) study.wentLiveAt = new Date().toISOString()
+    study.pausedAt = null
+  })
+}
+
+export async function pauseRollout(studyId: string): Promise<ActionResult> {
+  return edit(studyId, (study) => {
+    if (rolloutFinished(study)) return { ok: false, error: "This rollout has ended." }
+    if (!study.wentLiveAt && !study.openWeek) return { ok: false, error: "Send the rollout live before pausing it." }
+    study.pausedAt = new Date().toISOString()
+  })
+}
+
+export async function resumeRollout(studyId: string): Promise<ActionResult> {
+  return edit(studyId, (study) => {
+    study.pausedAt = null
+  })
+}
+
 export async function receiveNextDay(studyId: string): Promise<ActionResult> {
   return edit(studyId, (study) => {
+    const held = paused(study)
+    if (held) return held
     if (!study.openWeek) return { ok: false, error: "This rollout is not waiting on another file." }
     return { ok: true, warnings: [fileNextDay(study)] }
   })

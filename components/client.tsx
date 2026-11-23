@@ -8,7 +8,6 @@ import {
   amendStudy,
   applyProposal,
   createStudy,
-  deleteStudy,
   generateBaseline,
   generateMeasurement,
   launchPulse,
@@ -102,22 +101,6 @@ export function SetupForm({ study }: { study: Study }) {
   )
 }
 
-export function DeleteStudy({ id }: { id: string }) {
-  return (
-    <form action={deleteStudy.bind(null, id)}>
-      <button
-        type="submit"
-        className="btn btn-ghost"
-        onClick={(event) => {
-          if (!confirm("Delete this study?")) event.preventDefault()
-        }}
-      >
-        Delete study
-      </button>
-    </form>
-  )
-}
-
 function StudyFields({ study, defaultDate }: { study?: Study; defaultDate?: string }) {
   return (
     <>
@@ -169,7 +152,7 @@ function StudyFields({ study, defaultDate }: { study?: Study; defaultDate?: stri
       </div>
       <label className="field">
         <span>What is being rolled out</span>
-        <textarea className="input" name="summary" defaultValue={study?.summary ?? ""} placeholder="Who gets it, who is held back, and what decision this study has to support." />
+        <textarea className="input" name="summary" defaultValue={study?.summary ?? ""} placeholder="Who gets it, who is held back, and which number this study will read." />
       </label>
     </>
   )
@@ -269,7 +252,7 @@ export function OutcomesPanel({ study, templates }: { study: Study; templates: T
       {study.metricsLocked && (
         <div className="callout callout-good">
           <p className="callout-title">Locked {study.registeredAt ? `on ${study.registeredAt.slice(0, 10)}` : ""}</p>
-          <p>These are the metrics you agreed. Changing them means this rollout no longer ends in keep, expand, or cut.</p>
+          <p>These are the metrics you agreed. Changing them marks the estimate exploratory.</p>
         </div>
       )}
       {study.metrics.map((metric) => (
@@ -358,7 +341,7 @@ export function OutcomesPanel({ study, templates }: { study: Study; templates: T
       {study.metricsLocked && (
         <form action={amendAction} className="card stack">
           <h3 className="font-semibold">Change the agreed metrics</h3>
-          <p className="text-sm text-muted">This rollout will no longer end in keep, expand, or cut. Start a new one if you want a clean result.</p>
+          <p className="text-sm text-muted">Changing the agreed metrics marks this estimate exploratory.</p>
           <input type="hidden" name="id" value={study.id} />
           <input type="hidden" name="what" value="metrics" />
           <textarea className="input" name="note" placeholder="What changed, and why." />
@@ -415,7 +398,7 @@ export function BaselinePanel({ study }: { study: Study }) {
             {wave.note ? `. ${wave.note}` : ""}
           </p>
         ))}
-        {study.pulseSkipped && <p className="text-sm">Pulse marked as skipped. The decision will say employee experience is not in it.</p>}
+        {study.pulseSkipped && <p className="text-sm">Pulse marked as skipped. The reading will say employee experience is not in it.</p>}
       </div>
       <div className="card stack">
         <h3 className="font-semibold">Employee notice</h3>
@@ -478,7 +461,7 @@ export function DesignPanel({
           </div>
           <label className="row text-sm">
             <input type="checkbox" name="expandIntoControl" defaultChecked={study.design.expandIntoControl} />
-            The held-back group can get this later. If they cannot, a good result means keep it where it is.
+            The held-back group can receive this later.
           </label>
           {state && !state.ok && <p className="form-error">{state.error}</p>}
           <button className="btn btn-ghost" disabled={formPending} type="submit">
@@ -498,7 +481,7 @@ export function DesignPanel({
         {balance && <p className="text-sm">{balance}</p>}
         {postAlreadyIn && !study.design.locked && (
           <div className="callout callout-warn">
-            <p>Measurement-window data is already loaded. Locking now marks this study retrospective, and it will not produce a keep, expand, or cut decision.</p>
+            <p>Measurement-window data is already loaded. Locking now marks this study retrospective. The estimate describes what is on file.</p>
           </div>
         )}
         {study.design.locked && <p className="text-sm">Locked{study.design.lockedAt ? ` on ${study.design.lockedAt.slice(0, 10)}` : ""}{study.design.retrospective ? ". Retrospective." : ""}</p>}

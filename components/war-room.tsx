@@ -3,8 +3,8 @@
 import Link from "next/link"
 import { receiveNextDay } from "@/app/actions"
 import { feed, nextArrival } from "@/lib/feed"
-import { formatDelta } from "@/lib/format"
-import { liveLabel } from "@/lib/progress"
+import { formatChange, readingClass } from "@/lib/format"
+import { rolloutWindow } from "@/lib/progress"
 import type { Report } from "@/lib/analysis"
 import type { Study } from "@/lib/types"
 import { Status, useRunner } from "./use-runner"
@@ -12,24 +12,26 @@ import { Status, useRunner } from "./use-runner"
 export function WarRoom({ study, report, home = false }: { study: Study; report: Report; home?: boolean }) {
   const { run, pending, error, warnings } = useRunner()
   const primary = report.primary
-  const label = liveLabel(study)
+  const when = rolloutWindow(study)
   const items = feed(study)
   const arrival = nextArrival(study)
-  const reading =
-    primary?.did == null
-      ? "Not enough closed weeks for a reading yet."
-      : `${primary.name} is ${formatDelta(primary.did, primary.unit)} ${primary.unit === "share" || primary.unit === "score" || primary.unit === "dollars" ? "" : primary.unit} so far.`
 
   return (
     <section className="war-room">
       <div className="stack">
         <p className="kicker">Live rollout</p>
         <h2>{home ? study.name : "This week"}</h2>
-        <p className="text-sm text-muted">
-          {study.company} · {study.tool}
-          {label ? ` · ${label}` : ""}
+        {when ? <p className="text-sm text-muted">{when}</p> : null}
+        <p>
+          {primary?.did == null ? (
+            "Not enough closed weeks for a reading yet."
+          ) : (
+            <span className={readingClass(primary, report.decision !== "inconclusive")}>
+              {primary.name} is {formatChange(primary.did, primary.unit)} so far.
+            </span>
+          )}{" "}
+          The planned weeks are not all on file.
         </p>
-        <p>{reading} The decision waits until the planned weeks are in.</p>
         {study.openWeek && (
           <p className="text-sm text-muted">
             {study.openWeek.day < 2
@@ -37,7 +39,8 @@ export function WarRoom({ study, report, home = false }: { study: Study; report:
               : `Check-in: ${study.openWeek.replies} of ${study.openWeek.invited} replies, still open.`}
           </p>
         )}
-        {arrival && (
+        {study.pausedAt && <p className="text-sm text-muted">Collection is paused. Resume it from the rollout settings.</p>}
+        {arrival && !study.pausedAt && (
           <div className="row">
             <button type="button" className="btn" disabled={pending} onClick={() => run(() => receiveNextDay(study.id))}>
               {pending ? "Filing" : `File ${arrival}`}
@@ -49,7 +52,7 @@ export function WarRoom({ study, report, home = false }: { study: Study; report:
             )}
           </div>
         )}
-        {!arrival && home && (
+        {home && (study.pausedAt || !arrival) && (
           <Link href={`/studies/${study.id}`} className="btn btn-ghost">
             Open the rollout
           </Link>

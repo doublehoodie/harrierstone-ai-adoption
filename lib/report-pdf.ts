@@ -9,6 +9,8 @@ const PAGE_H = 792
 const MARGIN = 54
 const INK = rgb(0.11, 0.1, 0.09)
 const MUTED = rgb(0.38, 0.35, 0.31)
+const UP = rgb(0.114, 0.42, 0.235)
+const DOWN = rgb(0.616, 0.263, 0.157)
 
 export async function reportPdf(study: Study): Promise<Uint8Array> {
   const report = analyze(study)
@@ -20,13 +22,15 @@ export async function reportPdf(study: Study): Promise<Uint8Array> {
   const writer = new Writer(doc, font, bold)
 
   writer.kicker(`${study.company}  ·  ${FUNCTION_LABEL[study.functionId]}  ·  ${study.tool}`)
-  writer.heading(report.title, 22)
+  const tone =
+    report.decision !== "inconclusive" && report.primary?.detectable ? (report.primary.favorable ? UP : DOWN) : INK
+  writer.heading(report.title, 22, report.rules.includes("window_open") ? INK : tone)
   writer.paragraph(report.lede)
   for (const reason of report.reasons) writer.bullet(reason)
 
-  if (study.demo) writer.paragraph("These are sample numbers. Replace them with an admin export or CSV before anyone acts on this.")
-  else if (study.origin.outcomes === "synthetic") writer.paragraph("Some of these numbers are sample data. Replace them before a decision meeting.")
-  if (report.exploratory) writer.paragraph("The metric or the groups changed after they were confirmed, or the groups were confirmed after measurement data was already in. Read the estimate. Do not treat the line above as a decision.")
+  if (study.demo) writer.paragraph("These are sample numbers. Replace them with an admin export or CSV.")
+  else if (study.origin.outcomes === "synthetic") writer.paragraph("Some of these numbers are sample data. Replace them with an admin export or CSV.")
+  if (report.exploratory) writer.paragraph("The metric or the groups changed after they were confirmed, or the groups were confirmed after measurement data was already in. The estimate describes what is on file.")
   for (const warning of report.warnings) writer.bullet(warning)
 
   const primary = report.primary
@@ -34,7 +38,7 @@ export async function reportPdf(study: Study): Promise<Uint8Array> {
   if (primary?.did == null || primary.ciLow == null || primary.ciHigh == null) {
     writer.paragraph("The chart and the change appear once this metric has weeks before and after the rollout.")
   } else {
-    writer.line("Change", unitDelta(primary.did, primary.unit))
+    writer.line("Change", unitDelta(primary.did, primary.unit), tone)
     writer.line("95% range", formatRange(primary.ciLow, primary.ciHigh, primary.unit))
     writer.paragraph(primary.note)
   }
@@ -42,11 +46,11 @@ export async function reportPdf(study: Study): Promise<Uint8Array> {
   const others = report.effects.filter((effect) => !effect.primary)
   if (others.length > 0) {
     writer.heading("The other metrics", 14)
-    writer.paragraph("The recommendation follows the metric you agreed. A movement here does not change the recommendation by itself.")
+    writer.paragraph("The agreed metric is the one in the reading above. These are the other metrics on file.")
     for (const effect of others) {
       const change = effect.did == null ? "Not enough weeks" : unitDelta(effect.did, effect.unit)
       const range = effect.ciLow == null || effect.ciHigh == null ? "" : `, range ${formatRange(effect.ciLow, effect.ciHigh, effect.unit)}`
-      const read = effect.did == null ? "" : effect.detectable ? (effect.favorable ? ", improved" : ", moved the wrong way") : ", no detectable change"
+      const read = effect.did == null ? "" : effect.detectable ? (effect.favorable ? ", agreed direction" : ", other direction") : ", range includes no change"
       writer.bullet(`${effect.name}: ${change}${range}${read}`)
     }
   }
@@ -82,7 +86,7 @@ export async function reportPdf(study: Study): Promise<Uint8Array> {
     writer.paragraph(`Baseline response ${formatPct(report.pulseResponseRate)} of ${plural(invited, "person")} invited.`)
   }
 
-  writer.heading("What to do next", 14)
+  writer.heading("Reading", 14)
   writer.paragraph(report.nextStep)
 
   writer.heading("Who was in it", 14)
@@ -94,7 +98,7 @@ export async function reportPdf(study: Study): Promise<Uint8Array> {
 
   writer.heading("How this was calculated", 14)
   writer.paragraph("The number is the first wave's change minus the held-back group's change over the same weeks. Each week counts equally. Inside a week, each team counts by the number of observations on that row. A row under the privacy floor is left out, and a week is left out when the included observations add up to less than the floor. The range is how much those weekly results bounced. It is not proof the tool caused the change.")
-  writer.paragraph(`The recommendation is withheld when the metric or the groups were changed after they were confirmed, when everyone got it at once, when the range still includes both no change and an improvement that would matter, or when the groups are too small to see that improvement. Groups under ${study.privacyFloor} are hidden before any of this runs.`)
+  writer.paragraph(`The reading stays a description when the metric or the groups were changed after they were confirmed, when everyone got it at once, when the range still includes both no change and an improvement that would matter, or when the groups are too small to see that improvement. Groups under ${study.privacyFloor} are hidden before any of this runs.`)
   if (report.power) writer.paragraph(report.power.note)
   writer.paragraph("The calculations workbook repeats every row. On its Estimate sheet, column B is a formula and column C is the number in this report. They should match.")
 
@@ -127,10 +131,10 @@ class Writer {
     this.y -= 8
   }
 
-  heading(text: string, size: number) {
+  heading(text: string, size: number, color: ReturnType<typeof rgb> = INK) {
     this.y -= size === 22 ? 4 : 12
     this.ensure(size + 8)
-    this.draw(text, size, this.bold, INK)
+    this.draw(text, size, this.bold, color)
     this.y -= 6
   }
 
@@ -142,11 +146,11 @@ class Writer {
     this.block(text, 11, this.font, INK, 12)
   }
 
-  line(label: string, value: string) {
+  line(label: string, value: string, valueColor: ReturnType<typeof rgb> = INK) {
     this.ensure(16)
     const plain = ascii(label)
     this.page.drawText(plain, { x: MARGIN, y: this.y - 11, size: 11, font: this.font, color: MUTED })
-    this.page.drawText(ascii(value), { x: MARGIN + 150, y: this.y - 11, size: 11, font: this.bold, color: INK })
+    this.page.drawText(ascii(value), { x: MARGIN + 150, y: this.y - 11, size: 11, font: this.bold, color: valueColor })
     this.y -= 16
   }
 

@@ -2,7 +2,7 @@ import { addDays, daysBetween, mondayOf, todayISO, weeksFrom } from "./dates"
 import { gaussian, hashSeed, mulberry32 } from "./rng"
 import { addExtraRole, installOrg } from "./org"
 import { getTemplate } from "./templates"
-import type { Arm, FunctionId, InvestmentKind, Origin, SegmentId, Study, TemplateMetric } from "./types"
+import { SECTION_IDS, type Arm, type FunctionId, type InvestmentKind, type Origin, type SegmentId, type Study, type TemplateMetric } from "./types"
 import { blankStudy } from "./study"
 
 export interface RosterRow {
@@ -438,6 +438,7 @@ function buildDemo(input: DemoInput): Study {
   study.design.lockedAt = addDays(input.rolloutDate, -14)
   study.design.retrospective = false
   study.noticePlanned = true
+  study.sections = Object.fromEntries(SECTION_IDS.map((id) => [id, "done"]))
   const weeks = input.postWeeks ?? study.design.plannedPostWeeks
   fillBaseline(study)
   fillMeasurement(study, weeks)

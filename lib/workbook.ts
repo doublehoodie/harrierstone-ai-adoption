@@ -15,12 +15,12 @@ export async function workbookBuffer(study: Study): Promise<Uint8Array> {
   readme.columns = [{ width: 28 }, { width: 110 }]
   const lines: [string, string][] = [
     ["What this file is", "The rows behind the outcome, and the arithmetic the product used. Change a number on Rows and the formulas on Weeks and Estimate follow."],
-    ["Recommendation", report.title],
+    ["Reading", report.title],
     ["In one sentence", report.lede],
     ["Privacy floor", `A team under ${calc.floor} people is left out. An outcome row with n under ${calc.floor} is left out. A week whose included n sums to under ${calc.floor} is left out.`],
     ["Inside a week", "The week mean is the sum of value × n, divided by the sum of n, for included rows in that group."],
     ["Across weeks", "Each included week counts equally. The before number is the average of the before week means. The after number is the average of the after week means."],
-    ["The change", "First wave after, minus first wave before, minus the same change in the held-back group. If everyone got it at once, only the first wave's change is shown, and it is not a decision."],
+    ["The change", "First wave after, minus first wave before, minus the same change in the held-back group. If everyone got it at once, only the first wave's change is shown, and it cannot be separated from other changes in the same weeks."],
     ["The range", "A 95% interval. The spread is the sample variance of the week means (divide by weeks minus 1), combined across the four blocks of weeks. The multiplier is the t value on the Estimate sheet, from the same table the product uses. Excel's T.INV may differ by a small amount. The product uses the table."],
     ["What is not in the change", "Spend, adoption, and the short check-in do not enter the change. They are on their own sheets so a reviewer can see them."],
     ["Sheets", "Groups, Rows, Weeks, Estimate, Checks, Usage. Weeks column D and F are formulas over Rows. Estimate column B is formulas over Weeks. Estimate column C is the number the product published."],
@@ -133,12 +133,12 @@ export async function workbookBuffer(study: Study): Promise<Uint8Array> {
   checks.columns = [{ width: 36 }, { width: 28 }, { width: 80 }]
   checks.addRow(["Check", "Result", "Note"])
   header(checks)
-  checks.addRow(["Recommendation", report.title, report.reasons.join(" ")])
-  checks.addRow(["Rules that fired", report.rules.join(", "), "A keep, expand, or cut is withheld when any blocking rule is in this list."])
+  checks.addRow(["Reading", report.title, report.reasons.join(" ")])
+  checks.addRow(["Rules that fired", report.rules.join(", "), "A directional reading is withheld when any blocking rule is in this list."])
   for (const reason of report.reasons) checks.addRow(["Reason", reason, ""])
   for (const warning of report.warnings) checks.addRow(["Also read", warning, ""])
   checks.addRow(["t table", "df 1 → 12.71, 2 → 4.30, 3 → 3.18, 4 → 2.78, 5 → 2.57, 6 → 2.45, 8 → 2.31, 10 → 2.23, 12 → 2.18, 15 → 2.13, 20 → 2.09, 30 → 2.04, 60 → 2.00, 120 → 1.98, else 1.96", "The product steps down to the next lower row. It does not interpolate."])
-  checks.addRow(["Next step", report.nextStep, ""])
+  checks.addRow(["Reading note", report.nextStep, ""])
 
   const usage = book.addWorksheet("Usage")
   usage.addRow(["Period", "Team", "Active users", "Sessions per user", "Breadth", "Seat cost", "Token cost"])

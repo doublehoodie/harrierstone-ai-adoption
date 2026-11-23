@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { analyze, calculation } from "@/lib/analysis"
 import { formatMoney, formatValue } from "@/lib/format"
 import type { Study } from "@/lib/types"
@@ -26,7 +27,20 @@ export function EnginePanel({ study }: { study: Study }) {
 
   return (
     <details className="engine no-print">
-      <summary>Engine</summary>
+      <summary>How this was calculated</summary>
+      <div className="stack mt-3 text-sm leading-relaxed">
+        <p>
+          The number is the first wave&apos;s change minus the held-back group&apos;s change over the same weeks. Each week counts equally. Inside a week, each team counts by the number of observations on that row. A row under the privacy floor is left out, and a week is left out when the included observations add up to less than the floor. The range is how much those weekly results bounced. It is not proof the tool caused the change.
+        </p>
+        <p>
+          The reading stays a description when the metric or the groups were changed after they were confirmed, when everyone got it at once, when the range still includes both no change and an improvement that would matter, or when the groups are too small to see that improvement. Groups under {study.privacyFloor} are hidden before any of this runs.
+        </p>
+        {report.power && <p>{report.power.note}</p>}
+        <p>The short check-in uses the same four questions every time. It does not enter the change.</p>
+        <p>
+          <Link href={`/notice/${study.id}`}>Employee notice</Link>
+        </p>
+      </div>
       <p className="text-sm text-muted">
         The same calculation the workbook repeats. This window reads the study. It does not change it.
       </p>

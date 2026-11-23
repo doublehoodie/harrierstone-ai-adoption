@@ -31,7 +31,7 @@ export function NoticeBody({ study }: { study?: Study | null }) {
       </p>
       <h2 className="section-title">Who sees it</h2>
       <p>
-        The study owner ({owner}) and the executives deciding whether to keep, expand, or cut {tool}. They see group results and a range, not a point with false certainty, and not a person.
+        The study owner ({owner}) and the people reading {tool}. They see group results and a range, not a point with false certainty, and not a person.
       </p>
       <h2 className="section-title">Questions</h2>
       <p>Ask {owner}. Participation in the pulse is voluntary. The outcome and usage measures come from systems the company already operates.</p>

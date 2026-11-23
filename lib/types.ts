@@ -167,6 +167,10 @@ export interface StudyDesign {
   retrospective: boolean
 }
 
+export const SECTION_IDS = ["setup", "roles", "outcomes", "baseline", "design", "measure", "decide"] as const
+export type SectionId = (typeof SECTION_IDS)[number]
+export type SectionMark = "saved" | "done"
+
 export interface Study {
   id: string
   demo: boolean
@@ -211,6 +215,13 @@ export interface Study {
     usage: Origin
     pulse: Origin
   }
+
+  /** Saved keeps an outline check. Done fills it. */
+  sections?: Partial<Record<SectionId, SectionMark>>
+  /** Set when someone sends the rollout live. */
+  wentLiveAt?: string | null
+  /** Set while collection is paused. */
+  pausedAt?: string | null
 }
 
 export interface TemplateMetric extends Omit<Metric, "custom"> {

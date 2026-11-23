@@ -78,8 +78,14 @@ export function KestrelDock({
 
   return (
     <div className="kestrel-dock no-print">
-      {open && (
-        <section className="kestrel-window" role="dialog" aria-labelledby={titleId} style={{ width: size.width, height: size.height }}>
+      <section
+        className={open ? "kestrel-window is-open" : "kestrel-window"}
+        role="dialog"
+        aria-labelledby={titleId}
+        aria-hidden={!open}
+        inert={!open}
+        style={{ width: size.width, height: size.height }}
+      >
           <button type="button" className="kestrel-resize" aria-label="Resize Kestrel" onPointerDown={startResize} />
           <div className="row justify-between">
             <h2 id={titleId} className="font-semibold">
@@ -132,7 +138,6 @@ export function KestrelDock({
           </div>
           <Status error={error} warnings={[]} />
         </section>
-      )}
       <button
         type="button"
         className="kestrel-fab"

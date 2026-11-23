@@ -19,7 +19,7 @@ const PATH = [
   {
     when: "Before",
     title: "We frame the decision with you",
-    text: "Which investment, which teams, and which number would change a keep, expand, or cut. That metric is locked before go-live. We pull the weeks already on file and run a short check-in, so the baseline exists. A signed study is meant to have that baseline within two weeks. It cannot be reconstructed after the fact.",
+    text: "Which investment, which teams, and which number the readout will follow. That metric is locked before go-live. We pull the weeks already on file and run a short check-in, so the baseline exists. A signed study is meant to have that baseline within two weeks. It cannot be reconstructed after the fact.",
   },
   {
     when: "Roles",
@@ -38,8 +38,8 @@ const PATH = [
   },
   {
     when: "Readout",
-    title: "You leave with a decision and the math",
-    text: "When the planned weeks are in, the same numbers are written for the CFO, the head of AI, and the operator who owns the work. Keep, expand, or cut. The change and its range. What the work cost. A workbook that repeats every calculation. We can walk that readout with you.",
+    title: "You leave with the reading and the math",
+    text: "When the planned weeks are in, the same numbers are written for the CFO, the head of AI, and the operator who owns the work. The change and its range. What the work cost. A workbook that repeats every calculation. The study reports the reading. It does not choose the next step. We can walk that readout with you.",
   },
 ]
 
@@ -71,7 +71,7 @@ export default function LandingPage() {
       <section className="landing-block">
         <h2>What you take into that meeting</h2>
         <p>
-          A keep, expand, or cut, in the outcome your function already manages by: cycle time, tickets closed, time to fill, days to close, pipeline. Next to it, the cost of getting that outcome three ways — people before the tool, people plus the tool, and an agent’s own work. The range is on the page. When the weeks cannot separate a real gain from no change, the study says so, and it withholds the decision.
+          The change in the outcome your function already manages by: cycle time, tickets closed, time to fill, days to close, pipeline. Next to it, the cost of getting that outcome three ways — people before the tool, people plus the tool, and an agent’s own work. The range is on the page. When the weeks cannot separate a real gain from no change, the number stays unmarked.
         </p>
         <p>
           That is the return. You name the metric and the size of change that would matter. We measure that change against what the rollout cost. Finance can open the workbook and repeat the arithmetic.
@@ -118,20 +118,20 @@ export default function LandingPage() {
         <h2>What changes when you have the study</h2>
         <ul className="landing-steps landing-outcomes">
           <li>
-            <span className="landing-num">Keep</span>
-            <p>Leave a rollout where it is when the work moved and there is no further group to give it to.</p>
+            <span className="landing-num">Moved</span>
+            <p>The agreed metric moved, and the range does not include no change. That number is green.</p>
           </li>
           <li>
-            <span className="landing-num">Expand</span>
-            <p>Give the same tool to the group you held back, on the same metric you already locked.</p>
+            <span className="landing-num">Open</span>
+            <p>The range still includes no change, or the planned weeks are not all in. The number stays unmarked.</p>
           </li>
           <li>
-            <span className="landing-num">Cut</span>
-            <p>Stop paying for a rollout that did not move the work, before the renewal signs it for another year.</p>
+            <span className="landing-num">Other way</span>
+            <p>The agreed metric moved the other way, and the range does not include no change. That number is red.</p>
           </li>
         </ul>
         <p>
-          The best time is before the rollout or the renewal. After everyone has it, the baseline is gone. The demo uses sample companies: one study is still open, and the others have already reached a decision. Replace the numbers before anyone acts on them.
+          The best time is before the rollout or the renewal. After everyone has it, the baseline is gone. The demo uses sample companies: one study is still open, and the others have a finished window. Replace the numbers with your own files.
         </p>
         <div className="row mt-5">
           <Link href="/rollouts" className="btn">

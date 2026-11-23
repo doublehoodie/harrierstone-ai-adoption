@@ -2,7 +2,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { EnginePanel } from "@/components/engine-panel"
 import { StudyNav } from "@/components/study-nav"
-import { stage, steps } from "@/lib/progress"
+import { rolloutPhase, stage, steps } from "@/lib/progress"
 import { getStudy } from "@/lib/store"
 
 export default async function StudyLayout({ children, params }: { children: React.ReactNode; params: Promise<{ id: string }> }) {
@@ -31,7 +31,7 @@ export default async function StudyLayout({ children, params }: { children: Reac
         </div>
         <div className="study-shell">
           <div className="no-print">
-            <StudyNav steps={steps(study)} />
+            <StudyNav steps={steps(study)} studyId={study.id} phase={rolloutPhase(study)} />
           </div>
           <div className="study-content">
             {children}

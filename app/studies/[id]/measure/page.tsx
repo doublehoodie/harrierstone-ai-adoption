@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { MeasurePanel } from "@/components/client"
+import { SectionActions } from "@/components/section-actions"
 import { ConnectorList } from "@/components/connector-list"
 import { connectableSources } from "@/lib/connectors"
 import { weekCounts } from "@/lib/progress"
@@ -30,6 +31,7 @@ export default async function MeasurePage({ params }: { params: Promise<{ id: st
         </div>
         <ConnectorList sources={connectableSources()} connections={workspace.connections} fileLink />
       </section>
+      <SectionActions studyId={study.id} section="measure" />
     </div>
   )
 }
