@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useId, useRef, useState, type PointerEvent as ReactPointerEvent } from "react"
+import { usePathname } from "next/navigation"
 import { askKestrelAction, confirmKestrel } from "@/app/actions"
 import { gameplanReady, type Gameplan } from "@/lib/kestrel-plan"
 import { FUNCTION_LABEL } from "@/lib/templates"
@@ -15,6 +16,8 @@ export function KestrelDock({
   tokensUsed: number
   tokenCap: number
 }) {
+  const path = usePathname()
+  const onLanding = path === "/" || path.startsWith("/research") || path.startsWith("/contact")
   const { run, pending, error } = useRunner()
   const [open, setOpen] = useState(false)
   const [draft, setDraft] = useState("")
@@ -75,6 +78,8 @@ export function KestrelDock({
       return { ok: true }
     })
   }
+
+  if (onLanding) return null
 
   return (
     <div className="kestrel-dock no-print">
