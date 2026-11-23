@@ -10,6 +10,8 @@ export interface Workspace {
   /** Whole percent, 1 to 80. New rollouts copy this into the study. */
   practicalEffectPct: number
   connections: Record<string, Connection>
+  /** Tokens Kestrel has used during testing. The cap lives in the server environment. */
+  kestrelTokensUsed: number
 }
 
 export function defaultWorkspace(): Workspace {
@@ -18,6 +20,7 @@ export function defaultWorkspace(): Workspace {
     privacyFloor: 5,
     practicalEffectPct: 10,
     connections: {},
+    kestrelTokensUsed: 0,
   }
 }
 
@@ -39,6 +42,7 @@ export function normalizeWorkspace(value: Partial<Workspace> | undefined): Works
     privacyFloor: Number.isFinite(floor) ? Math.min(500, Math.max(5, Math.round(floor))) : base.privacyFloor,
     practicalEffectPct: Number.isFinite(effect) ? Math.min(80, Math.max(1, Math.round(effect))) : base.practicalEffectPct,
     connections,
+    kestrelTokensUsed: Number.isFinite(Number(value?.kestrelTokensUsed)) ? Math.max(0, Math.round(Number(value?.kestrelTokensUsed))) : 0,
   }
 }
 

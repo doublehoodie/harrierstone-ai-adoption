@@ -79,6 +79,16 @@ export default function LandingPage() {
       </section>
 
       <section className="landing-block">
+        <h2>Kestrel starts the study with you</h2>
+        <p>
+          Kestrel is the assistant in the corner of this page. Describe the rollout the way you would to a colleague: which tool, which teams, and what you hope moved. Kestrel writes the plan in the chat, including the metric, who gets it first, who waits, and which file already has the number.
+        </p>
+        <p>
+          You confirm, and the study is created. You can keep editing it. Kestrel speaks with the person who owns the program, and it waits for that confirmation before anything is saved.
+        </p>
+      </section>
+
+      <section className="landing-block">
         <h2>From the first working session to the readout</h2>
         <p>A study is an engagement. We set it up with you, and we stay through the weeks and the readout.</p>
         <ol className="landing-steps">

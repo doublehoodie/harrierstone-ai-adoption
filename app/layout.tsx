@@ -1,6 +1,9 @@
 import type { Metadata } from "next"
 import { Newsreader, Public_Sans } from "next/font/google"
+import { KestrelDock } from "@/components/kestrel-panel"
 import { Shell } from "@/components/shell"
+import { kestrelTokenCap } from "@/lib/kestrel"
+import { getWorkspace } from "@/lib/store"
 import "./globals.css"
 
 const sans = Public_Sans({ subsets: ["latin"], variable: "--font-public" })
@@ -22,6 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </a>
         <Shell />
         <main id="main" className="app-main">{children}</main>
+        <KestrelDock configured={Boolean(process.env.OPENAI_API_KEY)} tokensUsed={getWorkspace().kestrelTokensUsed} tokenCap={kestrelTokenCap()} />
       </body>
     </html>
   )

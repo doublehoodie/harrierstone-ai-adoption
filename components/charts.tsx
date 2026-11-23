@@ -6,15 +6,17 @@ export function CompareChart({
   series,
   unit,
   rollout,
+  compact = false,
 }: {
   series: WeekPoint[]
   unit: string
   rollout: string
+  compact?: boolean
 }) {
   if (series.length < 2) return null
   const width = 720
-  const height = 250
-  const pad = { l: 48, r: 12, t: 16, b: 32 }
+  const height = compact ? 120 : 250
+  const pad = compact ? { l: 44, r: 8, t: 8, b: 22 } : { l: 48, r: 12, t: 16, b: 32 }
   const values = series.flatMap((point) => [point.treatment, point.control].filter((value): value is number => value != null))
   const min = Math.min(...values)
   const max = Math.max(...values)

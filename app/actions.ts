@@ -11,6 +11,8 @@ import { weekCounts } from "@/lib/progress"
 import type { ActionResult } from "@/lib/result"
 import { applyTemplateMetrics, blankStudy } from "@/lib/study"
 import { fileNextDay, fillBaseline, fillMeasurement, loadSampleOrg, writePulse } from "@/lib/synthetic"
+import { askKestrel, kestrelTokenCap, type KestrelMessage } from "@/lib/kestrel"
+import { gameplanReady, readGameplan, studyFromGameplan, type Gameplan } from "@/lib/kestrel-plan"
 import { getStudy, getWorkspace, removeStudy, resetDemos, saveStudy, saveWorkspace } from "@/lib/store"
 import { connectableSources } from "@/lib/connectors"
 import { normalizeWorkspace } from "@/lib/workspace"
@@ -22,6 +24,7 @@ const KINDS: InvestmentKind[] = ["seats", "agent", "training", "mixed"]
 
 function refresh(id?: string) {
   revalidatePath("/")
+  revalidatePath("/rollouts")
   if (!id) return
   revalidatePath(`/studies/${id}`, "layout")
   revalidatePath(`/notice/${id}`)
@@ -497,6 +500,34 @@ export async function setAllConnections(connected: boolean): Promise<ActionResul
   saveWorkspace(workspace)
   refreshSettings()
   return { ok: true }
+}
+
+export async function askKestrelAction(transcript: KestrelMessage[]): Promise<
+  | { ok: true; reply: string; plan: Gameplan; tokensUsed: number; tokenCap: number }
+  | { ok: false; error: string; tokensUsed: number; tokenCap: number }
+> {
+  const workspace = getWorkspace()
+  const cap = kestrelTokenCap()
+  const result = await askKestrel(transcript, workspace.kestrelTokensUsed)
+  if (result.spent > 0) {
+    workspace.kestrelTokensUsed += result.spent
+    saveWorkspace(workspace)
+    refresh()
+  }
+  const tokensUsed = workspace.kestrelTokensUsed
+  if ("error" in result) return { ok: false, error: result.error, tokensUsed, tokenCap: cap }
+  return { ...result.turn, tokensUsed, tokenCap: cap }
+}
+
+export async function confirmKestrel(plan: Gameplan): Promise<ActionResult> {
+  const checked = readGameplan(plan)
+  if ("error" in checked) return { ok: false, error: checked.error }
+  if (!gameplanReady(checked.plan)) return { ok: false, error: checked.plan.questions[0] ?? "The plan still has an open question." }
+  const workspace = getWorkspace()
+  const study = studyFromGameplan(checked.plan, workspace.privacyFloor, workspace.practicalEffectPct)
+  saveStudy(study)
+  refresh(study.id)
+  redirect(`/studies/${study.id}`)
 }
 
 export async function receiveNextDay(studyId: string): Promise<ActionResult> {
