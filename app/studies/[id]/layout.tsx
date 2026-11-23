@@ -1,7 +1,6 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { EnginePanel } from "@/components/engine-panel"
-import { LiveRail } from "@/components/live-rail"
 import { StudyNav } from "@/components/study-nav"
 import { stage, steps } from "@/lib/progress"
 import { getStudy } from "@/lib/store"
@@ -30,7 +29,6 @@ export default async function StudyLayout({ children, params }: { children: Reac
             {where.label}
           </span>
         </div>
-        <LiveRail study={study} />
         <div className="study-shell">
           <div className="no-print">
             <StudyNav steps={steps(study)} />
