@@ -51,6 +51,9 @@ export default function LandingPage() {
               Talk with us
             </Link>
           </div>
+          <p className="demo-note">
+            The demo runs on sample companies. Connecting ChatGPT, Claude, or another system records that source. It does not pull rows, send check-ins, or sign a company in. Numbers in the sample rollouts are sample data.
+          </p>
         </div>
       </section>
 

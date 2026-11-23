@@ -30,12 +30,15 @@ import {
   uploadUsage,
   useSampleOrg,
 } from "@/app/actions"
+import { FieldConnectors } from "@/components/field-connectors"
 import { Status, UploadButton, useRunner } from "@/components/use-runner"
+import { sourcesFor } from "@/lib/connectors"
 import { formatPct } from "@/lib/format"
 import { lockPhrase } from "@/lib/method"
 import type { ActionResult } from "@/lib/result"
 import type { Occupation } from "@/lib/ontology"
 import type { Arm, Study, Template } from "@/lib/types"
+import type { Connection } from "@/lib/workspace"
 
 const empty: ActionResult | null = null
 
@@ -179,7 +182,7 @@ export function RolesPanel({ study, occupations }: { study: Study; occupations: 
       </div>
       <Status error={error} warnings={warnings} />
       <p className="form-note">
-        Columns: title, team, headcount. Names and emails are discarded. {study.roles.length > 0 && `${auto} of ${study.roles.length} titles matched at 75% or better.`}
+        Columns: title, team, headcount. Names and emails are discarded. The roster is a file in this demo. There is no HR-system connection for titles. {study.roles.length > 0 && `${auto} of ${study.roles.length} titles matched at 75% or better.`}
       </p>
       {roles.map((role) => (
         <article key={role.id} className="card stack">
@@ -357,19 +360,20 @@ export function OutcomesPanel({ study, templates }: { study: Study; templates: T
   )
 }
 
-export function BaselinePanel({ study }: { study: Study }) {
+export function BaselinePanel({ study, connections }: { study: Study; connections: Record<string, Connection> }) {
   const { run, pending, error, warnings } = useRunner()
   return (
     <div className="stack">
       <div className="card stack">
         <h3 className="font-semibold">Weeks before the rollout</h3>
-        <p className="text-sm text-muted">Upload a CSV from the system you already use. Columns: period, team, metric, value, n. An engineering export with pr_cycle_time_hours works too.</p>
+        <p className="text-sm text-muted">Bring the weeks from the system you already use, or record that account below. Columns for a file: period, team, metric, value, n.</p>
         <div className="row">
           <UploadButton label="Upload CSV" disabled={pending} onFile={(csv) => run(() => uploadOutcomes(study.id, csv))} />
           <a className="btn btn-ghost" href="/samples/outcomes-baseline">
             Example file
           </a>
         </div>
+        <FieldConnectors sources={sourcesFor("outcomes")} connections={connections} />
         <details>
           <summary className="cursor-pointer text-sm text-muted">Use sample numbers instead</summary>
           <div className="row mt-3">
@@ -381,7 +385,7 @@ export function BaselinePanel({ study }: { study: Study }) {
       </div>
       <div className="card stack">
         <h3 className="font-semibold">Short check-in</h3>
-        <p className="text-sm text-muted">Four questions, same wording every time. Sending from here records sample answers. It does not email anyone yet.</p>
+        <p className="text-sm text-muted">Four questions, same wording every time. This demo records sample answers on the page. It does not email or message anyone.</p>
         <div className="row">
           <button type="button" className="btn btn-ghost" disabled={pending} onClick={() => run(() => launchPulse(study.id, "email"))}>
             Record an email wave
@@ -543,14 +547,14 @@ function ArmButton({
   )
 }
 
-export function MeasurePanel({ study }: { study: Study }) {
+export function MeasurePanel({ study, connections }: { study: Study; connections: Record<string, Connection> }) {
   const { run, pending, error, warnings } = useRunner()
   const [state, action, formPending] = useActionState(setAssumptions, empty)
   return (
     <div className="stack">
       <div className="card stack">
         <h3 className="font-semibold">Since the rollout</h3>
-        <p className="text-sm text-muted">Upload the admin export or a CSV. Each source is optional. A week you upload replaces that week.</p>
+        <p className="text-sm text-muted">A file or a recorded account can fill a week. A week you upload replaces that week. A recorded account does not pull rows in this demo.</p>
         <details>
           <summary className="cursor-pointer text-sm text-muted">Use sample numbers instead</summary>
           <div className="row mt-3">
@@ -564,29 +568,32 @@ export function MeasurePanel({ study }: { study: Study }) {
       <div className="grid-2">
         <div className="card stack" id="upload-usage">
           <h3 className="font-semibold">Usage</h3>
-          <p className="text-sm text-muted">period, team, active_users, sessions_per_user, breadth, seat_cost, token_cost</p>
+          <p className="text-sm text-muted">Seat use by team and week. The admin account is the direct path. A file still works: period, team, active_users, sessions_per_user, breadth, seat_cost, token_cost.</p>
           <div className="row">
             <UploadButton label="Upload admin export" disabled={pending} onFile={(csv) => run(() => uploadUsage(study.id, csv))} />
             <a className="btn btn-ghost" href="/samples/usage">Example file</a>
           </div>
+          <FieldConnectors sources={sourcesFor("usage")} connections={connections} />
         </div>
         <div className="card stack" id="upload-outcomes">
           <h3 className="font-semibold">Outcomes</h3>
-          <p className="text-sm text-muted">period, team, metric, value, n. Uploading a week replaces that week.</p>
+          <p className="text-sm text-muted">The system that already holds the metric. A file uses period, team, metric, value, n. Uploading a week replaces that week.</p>
           <div className="row">
             <UploadButton label="Upload outcomes" disabled={pending} onFile={(csv) => run(() => uploadOutcomes(study.id, csv))} />
             <a className="btn btn-ghost" href="/samples/outcomes-followup">Example file</a>
             <a className="btn btn-ghost" href="/samples/dx">Engineering export</a>
           </div>
+          <FieldConnectors sources={sourcesFor("outcomes")} connections={connections} />
         </div>
         <div className="card stack" id="upload-spend">
           <h3 className="font-semibold">Spend</h3>
-          <p className="text-sm text-muted">period, amount, and optionally team and category (seat, token, other).</p>
+          <p className="text-sm text-muted">Invoices for seats and tokens. A file uses period, amount, and optionally team and category (seat, token, other).</p>
           <UploadButton label="Upload spend" disabled={pending} onFile={(csv) => run(() => uploadSpend(study.id, csv))} />
+          <FieldConnectors sources={sourcesFor("spend")} connections={connections} />
         </div>
         <div className="card stack">
           <h3 className="font-semibold">Agents</h3>
-          <p className="text-sm text-muted">period, agent, team, spend, units, metric. An agent is measured on the same outcomes as a team, with its spend as its cost.</p>
+          <p className="text-sm text-muted">period, agent, team, spend, units, metric. An agent is measured on the same outcomes as a team. This demo has no agent-account connection, so the file is the path.</p>
           <div className="row">
             <UploadButton label="Upload agent work" disabled={pending} onFile={(csv) => run(() => uploadAgents(study.id, csv))} />
             <a className="btn btn-ghost" href="/samples/agents">Sample</a>

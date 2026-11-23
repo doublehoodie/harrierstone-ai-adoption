@@ -2,8 +2,6 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { MeasurePanel } from "@/components/client"
 import { SectionActions } from "@/components/section-actions"
-import { ConnectorList } from "@/components/connector-list"
-import { connectableSources } from "@/lib/connectors"
 import { courseOf } from "@/lib/method"
 import { weekCounts } from "@/lib/progress"
 import { getStudy, getWorkspace } from "@/lib/store"
@@ -19,7 +17,8 @@ export default async function MeasurePage({ params }: { params: Promise<{ id: st
     <div>
       <h1 className="screen-title">Data</h1>
       <p className="screen-note">
-        {weeks.post > 0 ? `${weeks.post} weeks since the rollout are on file.` : "Nothing since the rollout is on file yet."} Bring the file in below, or use a source that is already connected. Seat use is a weekly total. The metric you agreed is the result.
+        {weeks.post > 0 ? `${weeks.post} weeks since the rollout are on file.` : "Nothing since the rollout is on file yet."} Connect the account in each block, or bring a file. Seat use is a weekly total. The metric you agreed is the result. The full source list is in{" "}
+        <Link href="/settings?section=connectors">Settings</Link>.
       </p>
       {course.length > 0 && (
         <section className="card stack mt-8">
@@ -52,17 +51,8 @@ export default async function MeasurePage({ params }: { params: Promise<{ id: st
         </section>
       )}
       <div className="mt-8">
-        <MeasurePanel study={study} />
+        <MeasurePanel study={study} connections={workspace.connections} />
       </div>
-      <section className="mt-8 stack">
-        <div className="row justify-between">
-          <h2 className="font-semibold">Connections</h2>
-          <Link href="/settings?section=connectors" className="text-link">
-            Manage in Settings
-          </Link>
-        </div>
-        <ConnectorList sources={connectableSources()} connections={workspace.connections} fileLink />
-      </section>
       <SectionActions studyId={study.id} section="measure" />
     </div>
   )

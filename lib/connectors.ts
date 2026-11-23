@@ -217,6 +217,14 @@ export function sourcesBy(category: SourceCategory): SourceAdapter[] {
   return SOURCES.filter((source) => source.category === category)
 }
 
+/** Accounts that can fill one file on a study. The custom server stays in Settings. */
+export function sourcesFor(slot: "usage" | "outcomes" | "spend"): SourceAdapter[] {
+  const live = connectableSources().filter((source) => source.id !== "mcp")
+  if (slot === "usage") return live.filter((source) => source.category === "usage")
+  if (slot === "spend") return live.filter((source) => source.category === "spend")
+  return live.filter((source) => source.category === "outcomes" || source.category === "existing")
+}
+
 export function uploadAnchor(category: SourceCategory): string {
   if (category === "usage") return "#upload-usage"
   if (category === "spend") return "#upload-spend"

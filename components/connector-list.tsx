@@ -35,7 +35,7 @@ export function ConnectorList({
     <div className="stack">
       <div className="row justify-between">
         <p className="text-sm text-muted">
-          {onCount} of {live.length} connected. A connection records the source. Rows still arrive by upload until the admin grant is in place.
+          {onCount} of {live.length} connected. A connection records the source. This demo does not pull rows from the account.
         </p>
         {bulk && (
           <div className="row">
