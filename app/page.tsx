@@ -1,144 +1,137 @@
+import type { Metadata } from "next"
 import Link from "next/link"
+import { Reveal } from "@/components/reveal"
+import { SiteFooter } from "@/components/site-footer"
 
-const SITUATIONS = [
+export const metadata: Metadata = {
+  title: "HarrierStone",
+  description: "What did the AI rollout accomplish, what did it return, and how much value did the tool provide?",
+}
+
+const QUESTIONS = [
   {
-    title: "The renewal is already on the calendar",
-    text: "The seats are bought. The only report anyone can produce is who logged in. Someone still has to tell the CFO whether the work moved.",
+    title: "What did it accomplish?",
+    text: "The seats are live. The report on the table is still who logged in. The meeting is about the work that moved.",
   },
   {
-    title: "The rollout has not started, and the “before” is about to disappear",
-    text: "A tool, an agent, or a training program is about to go out. Once everyone has it, there is no baseline left to compare against.",
+    title: "What is the ROI?",
+    text: "The CFO wants the gain in the metric you already manage by, set against what the rollout cost.",
   },
   {
-    title: "The question is the return, and there is no statistics team",
-    text: "In PwC’s 2026 Global CEO Survey, 56% of CEOs reported neither higher revenue nor lower costs from AI over the prior year. The person who owns the rollout is usually a people lead, a head of AI, or a COO.",
+    title: "How much value did the tool provide?",
+    text: "People before the tool, people with the tool, and an agent do not cost the same.",
   },
 ]
 
-const PATH = [
-  {
-    when: "Before",
-    title: "We frame the decision with you",
-    text: "Which investment, which teams, and which number the readout will follow. That metric is locked before go-live. We pull the weeks already on file and run a short check-in, so the baseline exists. A signed study is meant to have that baseline within two weeks. It cannot be reconstructed after the fact.",
-  },
-  {
-    when: "Roles",
-    title: "Your titles, your tasks, your metric",
-    text: "You bring the org chart or a simple title list. We read each title for the work that role actually does, and we propose the metrics that follow from those tasks. Your team edits the match and the metric until they describe your company. A title we are unsure of waits for a person. Groups under five stay out of every result.",
-  },
-  {
-    when: "Design",
-    title: "We decide who gets it first",
-    text: "Together we hold a group back, or we stagger the wave. That comparison is what lets the weeks speak for the rollout. If the groups are too small to support a conclusion, we say so before more money goes out.",
-  },
-  {
-    when: "During",
-    title: "The study stays open while the rollout runs",
-    text: "Outcomes, seats, spend, and check-in replies arrive as the weeks do. You watch them in a live view, and we help keep the files coming. A CSV is enough when IT has not opened a connector yet. Nothing is installed on a laptop. Employees see a notice, and results are never about a named person.",
-  },
-  {
-    when: "Readout",
-    title: "You leave with the reading and the math",
-    text: "When the planned weeks are in, the same numbers are written for the CFO, the head of AI, and the operator who owns the work. The change and its range. What the work cost. A workbook that repeats every calculation. The study reports the reading. It does not choose the next step. We can walk that readout with you.",
-  },
+const LEAVES = [
+  { title: "The change", text: "Cycle time, tickets, time to fill, days to close, pipeline. The metric you already manage by." },
+  { title: "The range", text: "When the weeks cannot separate a gain from no change, the number stays unmarked." },
+  { title: "The cost", text: "People before the tool, people with the tool, and an agent’s own work." },
+]
+
+const STEPS = [
+  { when: "Before", text: "The metric is agreed, and the weeks already on file are pulled in. A baseline is meant to be ready within two weeks." },
+  { when: "During", text: "Outcomes, seats, and check-ins arrive with the weeks. You watch the study while it is still open." },
+  { when: "Readout", text: "The change, the range, and the cost. A workbook repeats every calculation. The study reports the reading." },
 ]
 
 export default function LandingPage() {
   return (
-    <div className="shell landing py-10">
-      <h1 className="page-title">AI Adoption made easy</h1>
-      <p className="lede">
-        HarrierStone runs the study around a rollout, an agent, or a training program, and stays with you from the baseline to the decision. It is built for a company of a few hundred to a few thousand people, in the metric that company already uses to judge the work.
-      </p>
-      <div className="row mt-6">
-        <Link href="/rollouts" className="btn">
-          Open the demo
-        </Link>
-      </div>
-
-      <section className="landing-block">
-        <h2>The meeting you are heading into</h2>
-        <div className="landing-steps">
-          {SITUATIONS.map((item) => (
-            <article key={item.title} className="landing-situation">
-              <h3 className="font-semibold">{item.title}</h3>
-              <p className="text-sm text-muted">{item.text}</p>
-            </article>
-          ))}
+    <div className="marketing">
+      <section className="hero">
+        <div className="market-inner">
+          <p className="kicker">For the company that already rolled the AI out</p>
+          <h1 className="page-title">AI Adoption made easy</h1>
+          <p className="lede">What did it accomplish for the business, what did it return, and how much value did the tool provide?</p>
+          <div className="row mt-8">
+            <Link href="/rollouts" className="btn">
+              Open the demo
+            </Link>
+            <Link href="/contact" className="btn btn-ghost">
+              Talk with us
+            </Link>
+          </div>
         </div>
       </section>
 
-      <section className="landing-block">
-        <h2>What you take into that meeting</h2>
-        <p>
-          The change in the outcome your function already manages by: cycle time, tickets closed, time to fill, days to close, pipeline. Next to it, the cost of getting that outcome three ways — people before the tool, people plus the tool, and an agent’s own work. The range is on the page. When the weeks cannot separate a real gain from no change, the number stays unmarked.
-        </p>
-        <p>
-          That is the return. You name the metric and the size of change that would matter. We measure that change against what the rollout cost. Finance can open the workbook and repeat the arithmetic.
-        </p>
-      </section>
-
-      <section className="landing-block">
-        <h2>Kestrel starts the study with you</h2>
-        <p>
-          Kestrel is the assistant in the corner of this page. Describe the rollout the way you would to a colleague: which tool, which teams, and what you hope moved. Kestrel writes the plan in the chat, including the metric, who gets it first, who waits, and which file already has the number.
-        </p>
-        <p>
-          You confirm, and the study is created. You can keep editing it. Kestrel speaks with the person who owns the program, and it waits for that confirmation before anything is saved.
-        </p>
-      </section>
-
-      <section className="landing-block">
-        <h2>From the first working session to the readout</h2>
-        <p>A study is an engagement. We set it up with you, and we stay through the weeks and the readout.</p>
-        <ol className="landing-steps">
-          {PATH.map((step) => (
-            <li key={step.when}>
-              <span className="landing-num">{step.when}</span>
-              <div>
-                <p className="font-semibold">{step.title}</p>
-                <p className="text-sm text-muted">{step.text}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      <section className="landing-block">
-        <h2>Tailored to the roles you actually have</h2>
-        <p>
-          A generic job title is a starting point. Each title is read for its tasks, and those tasks point to the metrics worth watching. Your team changes the reading: the title, the tasks we attached, and the metric itself. The version you confirm is the one the study uses.
-        </p>
-        <p>
-          Under that review is a task library — an ontology of role, task, and metric — that we are still extending. It is how a study starts from the work instead of from a blank form, and it gets sharper each time a company edits it. The edit is already part of every study. The library is the part still being deepened.
-        </p>
-      </section>
-
-      <section className="landing-block">
-        <h2>What changes when you have the study</h2>
-        <ul className="landing-steps landing-outcomes">
-          <li>
-            <span className="landing-num">Moved</span>
-            <p>The agreed metric moved, and the range does not include no change. That number is green.</p>
-          </li>
-          <li>
-            <span className="landing-num">Open</span>
-            <p>The range still includes no change, or the planned weeks are not all in. The number stays unmarked.</p>
-          </li>
-          <li>
-            <span className="landing-num">Other way</span>
-            <p>The agreed metric moved the other way, and the range does not include no change. That number is red.</p>
-          </li>
-        </ul>
-        <p>
-          The best time is before the rollout or the renewal. After everyone has it, the baseline is gone. The demo uses sample companies: one study is still open, and the others have a finished window. Replace the numbers with your own files.
-        </p>
-        <div className="row mt-5">
-          <Link href="/rollouts" className="btn">
-            Open the demo
-          </Link>
+      <section className="band">
+        <div className="market-inner">
+          <Reveal>
+            <h2 className="market-title market-lead">The enterprise AI is in. What has it actually accomplished for the business?</h2>
+            <div className="market-grid">
+              {QUESTIONS.map((item) => (
+                <article key={item.title}>
+                  <h3>{item.title}</h3>
+                  <p>{item.text}</p>
+                </article>
+              ))}
+            </div>
+          </Reveal>
         </div>
       </section>
+
+      <section className="market-section">
+        <div className="market-inner">
+          <Reveal>
+            <h2 className="market-title">The answer you take into that meeting</h2>
+            <div className="market-grid">
+              {LEAVES.map((item) => (
+                <article key={item.title}>
+                  <h3>{item.title}</h3>
+                  <p>{item.text}</p>
+                </article>
+              ))}
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      <section className="band">
+        <div className="market-inner">
+          <Reveal>
+            <h2 className="market-title">From the first session to the readout</h2>
+            <ol className="market-steps">
+              {STEPS.map((step) => (
+                <li key={step.when}>
+                  <span>{step.when}</span>
+                  <p>{step.text}</p>
+                </li>
+              ))}
+            </ol>
+          </Reveal>
+        </div>
+      </section>
+
+      <section className="market-section">
+        <div className="market-inner market-stat">
+          <Reveal>
+            <p className="market-figure">56%</p>
+            <p className="market-stat-text">of CEOs reported neither higher revenue nor lower costs from AI over the prior year.</p>
+            <p className="market-source">PwC Global CEO Survey, January 2026</p>
+            <Link href="/research" className="market-more">
+              The research behind the claim
+            </Link>
+          </Reveal>
+        </div>
+      </section>
+
+      <section className="band">
+        <div className="market-inner market-close">
+          <Reveal>
+            <h2 className="market-title">Ask it while a baseline still exists.</h2>
+            <p>After everyone has the tool, there is nothing left to compare the value against.</p>
+            <div className="row mt-8">
+              <Link href="/rollouts" className="btn">
+                Open the demo
+              </Link>
+              <Link href="/contact" className="btn btn-ghost">
+                Talk with us
+              </Link>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+      <SiteFooter />
     </div>
   )
 }

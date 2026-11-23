@@ -62,6 +62,7 @@ body > header {
   display: inline-flex;
   align-items: center;
   gap: 0.65rem;
+  flex: none;
   font-weight: 620;
   letter-spacing: -0.02em;
 }
@@ -1344,6 +1345,229 @@ fieldset.stack {
   letter-spacing: 0.02em;
 }
 
+.marketing {
+  padding-bottom: 1rem;
+}
+
+.market-inner {
+  width: min(1040px, calc(100% - 3rem));
+  margin-inline: auto;
+}
+
+.market-inner.narrow {
+  max-width: 40rem;
+}
+
+.hero {
+  padding: 6.5rem 0 5rem;
+}
+
+.hero-quiet {
+  padding: 4.5rem 0 3rem;
+}
+
+.market-title {
+  font-size: clamp(1.6rem, 3vw, 2.15rem);
+  font-weight: 560;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.market-lead {
+  max-width: 38rem;
+}
+
+.market-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2.5rem 2rem;
+  margin-top: 2.25rem;
+}
+
+.market-grid h3 {
+  font-size: 1.05rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.market-grid p,
+.market-steps p,
+.market-points,
+.research-row p {
+  margin-top: 0.45rem;
+  color: var(--color-muted);
+}
+
+.market-steps {
+  list-style: none;
+  margin: 2.25rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 1.75rem;
+}
+
+.market-steps li {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 36rem);
+  gap: 1.25rem;
+  align-items: baseline;
+}
+
+.market-steps span {
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.market-steps p,
+.market-points li {
+  margin: 0;
+}
+
+.band {
+  background: var(--color-paper-deep);
+  padding: 5.5rem 0;
+}
+
+.market-section {
+  padding: 5.5rem 0;
+}
+
+.market-stat {
+  max-width: 40rem;
+}
+
+.market-figure {
+  font-family: var(--font-serif);
+  font-size: clamp(3.4rem, 8vw, 5.4rem);
+  font-weight: 450;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  color: var(--color-ink);
+}
+
+.market-stat-text {
+  margin-top: 1.25rem;
+  max-width: 28rem;
+  font-size: 1.25rem;
+  line-height: 1.4;
+}
+
+.market-source {
+  margin-top: 0.8rem;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+
+.market-more {
+  display: inline-block;
+  margin-top: 1.5rem;
+  color: var(--color-teal);
+  font-weight: 620;
+  text-decoration: none;
+}
+
+.market-more:hover {
+  text-decoration: underline;
+}
+
+.market-close p {
+  margin-top: 0.8rem;
+  max-width: 32rem;
+  color: var(--color-muted);
+  font-size: 1.1rem;
+}
+
+.research-row {
+  display: grid;
+  grid-template-columns: minmax(8rem, 14rem) minmax(0, 36rem);
+  gap: 1.5rem 2.5rem;
+  align-items: end;
+  padding: 0.5rem 0 1.5rem;
+  border-bottom: 1px solid var(--color-line);
+}
+
+.stack-loose {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.market-points {
+  margin: 1.25rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.market-points li {
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--color-line);
+}
+
+.contact-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr);
+  gap: 3rem;
+  align-items: start;
+}
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.site-footer {
+  border-top: 1px solid var(--color-line);
+  padding: 1.4rem 0 2rem;
+}
+
+.site-footer-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.site-footer-nav {
+  display: flex;
+  gap: 1.25rem;
+}
+
+.site-footer-nav a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.site-footer-nav a:hover {
+  color: var(--color-ink);
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.reveal.shown {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
 @media (max-width: 860px) {
   .study-shell,
   .settings-shell {
@@ -1360,8 +1584,34 @@ fieldset.stack {
   .facts,
   .stat-grid,
   .dash-grid,
-  .landing-grid {
+  .landing-grid,
+  .market-grid,
+  .contact-layout,
+  .research-row {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hero {
+    padding: 3.5rem 0 2.75rem;
+  }
+
+  .band,
+  .market-section {
+    padding: 3.25rem 0;
+  }
+
+  .market-steps li {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.3rem;
+  }
+
+  .site-footer-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .nav-cta {
+    display: none;
   }
 
   .settings-nav {
