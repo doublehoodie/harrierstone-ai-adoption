@@ -4,6 +4,8 @@ import { analyze, calculation } from "./analysis"
 import { parseCsv, parseOrgCsv, parseOutcomeCsv } from "./csv"
 import { weeksFrom } from "./dates"
 import { mapTitle } from "./ontology"
+import { readingClass } from "./format"
+import { courseOf } from "./method"
 import { weekCounts } from "./progress"
 import { blankStudy } from "./study"
 import { buildDemos, fileNextDay } from "./synthetic"
@@ -205,6 +207,42 @@ describe("demo studies", () => {
     assert.equal(study.openWeek?.index, index + 1)
     assert.equal(study.openWeek?.day, 0)
     assert.equal(analyze(study).rules.includes("window_open"), true)
+  })
+
+  it("locks the northwind metric and groups before go-live and reports a range", () => {
+    const study = buildDemos().find((demo) => demo.id === "northwind")
+    assert.ok(study)
+    const report = analyze(study)
+    assert.ok(study.registeredAt && study.registeredAt.slice(0, 10) < study.design.rolloutDate)
+    assert.ok(study.design.lockedAt && study.design.lockedAt.slice(0, 10) < study.design.rolloutDate)
+    assert.equal(study.design.retrospective, false)
+    assert.ok(weekCounts(study).pre >= 4)
+    assert.ok(report.primary?.ciLow != null && report.primary.ciHigh != null)
+    const post = courseOf(study).filter((row) => row.period >= study.design.rolloutDate)
+    assert.ok(post.length >= study.design.plannedPostWeeks)
+    assert.ok(post.every((row) => row.outcome !== "—" && row.seats !== "—" && row.checkIn !== "—"))
+    const hidden = report.suppressed.join(" ")
+    assert.match(hidden, /Developer Advocate is hidden/)
+    assert.doesNotMatch(hidden, /\b4 people\b/)
+  })
+
+  it("leaves an underpowered study unmarked", () => {
+    const study = buildDemos().find((demo) => demo.id === "halcyon")
+    assert.ok(study)
+    const report = analyze(study)
+    assert.equal(report.decision, "inconclusive")
+    assert.equal(report.title, "Unmarked")
+    assert.equal(readingClass(report.primary, report.decision !== "inconclusive"), "")
+  })
+
+  it("keeps a closed week's check-in on file", () => {
+    const study = structuredClone(buildDemos().find((demo) => demo.id === "meridian"))
+    assert.ok(study?.openWeek)
+    study.openWeek.day = 4
+    study.openWeek.replies = 20
+    const period = study.openWeek.period
+    fileNextDay(study)
+    assert.ok(study.checkIns.some((row) => row.period === period && row.replies === 20))
   })
 
   it("writes the same change the workbook repeats", () => {

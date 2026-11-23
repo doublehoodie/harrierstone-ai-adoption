@@ -81,7 +81,7 @@ export function feed(study: Study): FeedEntry[] {
       entries.push({
         at: study.design.rolloutDate,
         when: shortDate(study.design.rolloutDate),
-        text: `${role.title} is ${plural(role.headcount, "person")}, under ${study.privacyFloor}, so that title stays out of the result.`,
+        text: `${role.title} is under ${study.privacyFloor}, so that title stays out of the result.`,
       })
     }
   }

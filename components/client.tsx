@@ -32,6 +32,7 @@ import {
 } from "@/app/actions"
 import { Status, UploadButton, useRunner } from "@/components/use-runner"
 import { formatPct } from "@/lib/format"
+import { lockPhrase } from "@/lib/method"
 import type { ActionResult } from "@/lib/result"
 import type { Occupation } from "@/lib/ontology"
 import type { Arm, Study, Template } from "@/lib/types"
@@ -251,8 +252,8 @@ export function OutcomesPanel({ study, templates }: { study: Study; templates: T
     <div className="stack">
       {study.metricsLocked && (
         <div className="callout callout-good">
-          <p className="callout-title">Locked {study.registeredAt ? `on ${study.registeredAt.slice(0, 10)}` : ""}</p>
-          <p>These are the metrics you agreed. Changing them marks the estimate exploratory.</p>
+          <p className="callout-title">{lockPhrase(study.registeredAt, study.design.rolloutDate)}</p>
+          <p>These are the metrics you agreed. They stay fixed. Changing them marks the estimate exploratory.</p>
         </div>
       )}
       {study.metrics.map((metric) => (
@@ -484,7 +485,9 @@ export function DesignPanel({
             <p>Measurement-window data is already loaded. Locking now marks this study retrospective. The estimate describes what is on file.</p>
           </div>
         )}
-        {study.design.locked && <p className="text-sm">Locked{study.design.lockedAt ? ` on ${study.design.lockedAt.slice(0, 10)}` : ""}{study.design.retrospective ? ". Retrospective." : ""}</p>}
+        {study.design.locked && (
+          <p className="text-sm">{lockPhrase(study.design.lockedAt, study.design.rolloutDate, study.design.retrospective)}.</p>
+        )}
         {study.teams.map((team) => (
           <div key={team.id} className="row justify-between border-t border-line py-2">
             <div>

@@ -261,7 +261,7 @@ function EffectTable({ effects, mark }: { effects: Effect[]; mark: boolean }) {
             </td>
             <td className={`num ${readingClass(effect, mark)}`}>{effect.did == null ? "—" : formatChange(effect.did, effect.unit)}</td>
             <td className="num">{effect.ciLow == null || effect.ciHigh == null ? "—" : formatRange(effect.ciLow, effect.ciHigh, effect.unit)}</td>
-            <td>{readEffect(effect)}</td>
+            <td>{readEffect(effect, mark)}</td>
           </tr>
         ))}
       </tbody>
@@ -269,9 +269,10 @@ function EffectTable({ effects, mark }: { effects: Effect[]; mark: boolean }) {
   )
 }
 
-function readEffect(effect: Effect): string {
+function readEffect(effect: Effect, settled: boolean): string {
   if (effect.did == null) return "Not enough weeks"
   if (!effect.detectable) return "Range includes no change"
+  if (!settled) return "Unmarked"
   return effect.favorable ? "Agreed direction" : "Other direction"
 }
 

@@ -6,7 +6,7 @@ import { buildDemos } from "./synthetic"
 import type { Study } from "./types"
 import { normalizeWorkspace, type Workspace } from "./workspace"
 
-const VERSION = 2
+const VERSION = 3
 const DEMO_ORDER = ["meridian", "northwind", "brightline", "halcyon", "lumen"]
 
 interface DB {

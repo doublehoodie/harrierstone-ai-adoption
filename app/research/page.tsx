@@ -6,7 +6,7 @@ import { RESEARCH } from "@/lib/site"
 
 export const metadata: Metadata = {
   title: "Research · HarrierStone",
-  description: "What buyers are being asked to show, and what a HarrierStone study puts on the table.",
+  description: "What buyers are being asked to show, and the research behind mapping a job title to the work.",
 }
 
 export default function ResearchPage() {
@@ -49,7 +49,7 @@ export default function ResearchPage() {
               <li>The cost of the work three ways: people, people with the tool, and an agent.</li>
             </ul>
             <p className="mt-8">
-              Each title is read for the tasks in the role, and those tasks point at the metric. Your team confirms the match. The task library behind that reading is still being extended.
+              Each title is read for the tasks in the role, and those tasks point at the metric. Your team confirms the match.
             </p>
             <div className="row mt-8">
               <Link href="/rollouts" className="btn">
@@ -59,6 +59,26 @@ export default function ResearchPage() {
                 Talk with us
               </Link>
             </div>
+          </Reveal>
+        </div>
+      </section>
+
+      <section className="band" id="mapping">
+        <div className="market-inner narrow">
+          <Reveal>
+            <h2 className="market-title">The research behind the mapping</h2>
+            <p className="mt-6">
+              Measuring whether AI changed the work starts with knowing what the work is. HarrierStone maps each job title to the tasks it involves, and each task to a metric the business already tracks. The team confirms each match.
+            </p>
+            <p className="mt-6">
+              Doing that for a whole company depends on the title-to-task step. Founder Yan (Paul) Zhou is researching that question. He is an M.A. candidate in Industrial-Organizational Psychology at New York University, expected May 2027. The working title is Ontology Building. The question is how well public occupational taxonomies, and different AI designs, support workforce planning tasks such as mapping a job title to the tasks and skills it involves.
+            </p>
+            <p className="mt-6">
+              The taxonomies are O*NET, the U.S. occupational database; ESCO, the European classification of skills, competences, qualifications and occupations; and SSOC, Singapore’s standard occupational classification. The designs are an advanced knowledge-graph retrieval system, a standard knowledge-graph retrieval system, and a language model with no knowledge graph. Open-source models, including Qwen, run locally for the comparison. Part of the work is a crosswalk that links an O*NET task to an ESCO task.
+            </p>
+            <p className="mt-6">
+              HarrierStone’s task library starts from O*NET. This research is how the library grows: which taxonomy to use for a title, and how a knowledge graph can propose the tasks for the team to confirm. The work is in progress. No finding is final.
+            </p>
           </Reveal>
         </div>
       </section>

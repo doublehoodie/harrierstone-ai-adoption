@@ -4,7 +4,8 @@ import { ChartLegend, CompareChart } from "@/components/charts"
 import { ResetDemos } from "@/components/client"
 import { StudyMenu } from "@/components/study-menu"
 import { WarRoom } from "@/components/war-room"
-import { formatChange, readingClass } from "@/lib/format"
+import { formatChange, formatRange, readingClass } from "@/lib/format"
+import { lockedBeforeGoLive } from "@/lib/method"
 import { liveLabel, rolloutPhase, rolloutWindow, stage } from "@/lib/progress"
 import { listStudies } from "@/lib/store"
 import { FUNCTION_LABEL } from "@/lib/templates"
@@ -88,10 +89,14 @@ function FinishedStudy({ study, report }: { study: Study; report: Report }) {
       <p className="kicker">{study.company}</p>
       <h2 className="screen-title">{study.name}</h2>
       {when ? <p className="text-sm text-muted">{when}</p> : null}
-      {primary?.did != null && (
-        <p className={readingClass(primary, report.decision !== "inconclusive")}>
-          {primary.name} is {formatChange(primary.did, primary.unit)}.
-        </p>
+      {primary?.did != null &&
+        (report.decision === "inconclusive" ? (
+          <p>{`Unmarked. ${primary.name} is ${formatChange(primary.did, primary.unit)}${primary.ciLow != null && primary.ciHigh != null ? ` (95% range ${formatRange(primary.ciLow, primary.ciHigh, primary.unit)})` : ""}.`}</p>
+        ) : (
+          <p className={readingClass(primary, true)}>{`${primary.name} is ${formatChange(primary.did, primary.unit)}${primary.ciLow != null && primary.ciHigh != null ? ` (95% range ${formatRange(primary.ciLow, primary.ciHigh, primary.unit)})` : ""}.`}</p>
+        ))}
+      {lockedBeforeGoLive(study) && (
+        <p className="text-sm text-muted">The metric and the groups were locked before go-live. The first wave and the hold-back stay as agreed.</p>
       )}
       <Link href={`/studies/${study.id}`} className="btn">
         Open the rollout

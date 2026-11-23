@@ -320,7 +320,7 @@ export async function setArm(studyId: string, teamId: string, arm: Arm | "unassi
     const team = study.teams.find((item) => item.id === teamId)
     if (!team) return { ok: false, error: "Unknown team." }
     if (arm !== "unassigned" && team.headcount < study.privacyFloor) {
-      return { ok: false, error: `${team.name} has ${team.headcount} people. Groups under ${study.privacyFloor} stay out of the results.` }
+      return { ok: false, error: `${team.name} is under ${study.privacyFloor}. Groups under ${study.privacyFloor} stay out of the results.` }
     }
     team.arm = arm
   })

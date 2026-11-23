@@ -4,6 +4,7 @@ import { ChartLegend, CompareChart } from "@/components/charts"
 import { DecisionBanner } from "@/components/decision-view"
 import { WarRoom } from "@/components/war-room"
 import { formatChange, formatDelta, formatMoney, formatPct, readingClass } from "@/lib/format"
+import { methodFacts } from "@/lib/method"
 import { liveLabel } from "@/lib/progress"
 import type { Study } from "@/lib/types"
 
@@ -27,6 +28,7 @@ export function StatusBoard({
   const heldN = held.reduce((sum, team) => sum + team.headcount, 0)
   const totalN = firstN + heldN
   const planned = study.design.plannedPostWeeks
+  const unmarked = report.decision === "inconclusive"
   const historyPct = Math.min(100, ((primary?.weeksPre ?? 0) / 4) * 100)
   const measurePct = Math.min(100, planned > 0 ? ((primary?.weeksPost ?? 0) / planned) * 100 : 0)
 
@@ -57,8 +59,8 @@ export function StatusBoard({
         <Stat
           label="Change"
           value={primary?.did == null ? "—" : formatChange(primary.did, primary.unit)}
-          note={primary?.name ?? "No metric yet"}
-          tone={readingClass(primary, report.decision !== "inconclusive")}
+          note={unmarked ? (live ? "Still measuring" : "Unmarked") : (primary?.name ?? "No metric yet")}
+          tone={readingClass(primary, !unmarked)}
         />
         <Stat
           label="Range"
@@ -72,6 +74,22 @@ export function StatusBoard({
         <Stat label="People" value={totalN ? String(totalN) : "—"} note={totalN ? `${firstN} first wave · ${heldN} held back` : "Groups not set"} />
         <Stat label="Spend" value={formatMoney(report.spend.total)} note={report.spend.activeRate == null ? "No usage yet" : `${formatPct(report.spend.activeRate)} of seats used`} />
       </div>
+
+      <section className="card stack">
+        <h2 className="font-semibold">How this was set</h2>
+        <ul className="list-disc space-y-1 pl-5 text-sm">
+          {methodFacts(study).map((fact) => (
+            <li key={fact}>{fact}</li>
+          ))}
+        </ul>
+        {report.suppressed.length > 0 && (
+          <ul className="list-disc space-y-1 pl-5 text-sm text-muted">
+            {report.suppressed.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <div className="dash-grid">
         <section className="card stack">

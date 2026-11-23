@@ -140,6 +140,13 @@ export interface Amendment {
   what: "metrics" | "design"
 }
 
+/** A group check-in for one week. Counts only. Never a person. */
+export interface CheckIn {
+  period: string
+  invited: number
+  replies: number
+}
+
 /** A measurement week that is still being filed, one weekday at a time. */
 export interface OpenWeek {
   /** Monday of the week being collected. */
@@ -205,6 +212,8 @@ export interface Study {
   agents: AgentPoint[]
   bands: UsageBand[]
   pulses: PulseWave[]
+  /** Weekly check-in totals. Group counts only. */
+  checkIns: CheckIn[]
   pulseSkipped: boolean
   noticePlanned: boolean
   amendments: Amendment[]

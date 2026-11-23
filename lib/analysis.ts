@@ -126,18 +126,29 @@ function readingTitle(effect: Effect | null): string {
   return `${effect.name} is ${formatChange(effect.did, effect.unit)}`
 }
 
+function reportTitle(rules: string[], decision: Decision, effect: Effect | null): string {
+  if (rules.includes("window_open")) return "Still measuring"
+  if (decision === "inconclusive") return effect?.did == null ? "Not enough on file" : "Unmarked"
+  return readingTitle(effect)
+}
+
 export function analyze(study: Study): Report {
   const floor = study.privacyFloor
   const suppressed: string[] = []
   const visible = study.teams.filter((team) => {
     if (team.headcount < floor) {
       suppressed.push(
-        `${team.name} is hidden because it has ${plural(team.headcount, "person")}. Groups under ${floor} are not reported.`,
+        `${team.name} is hidden. Groups under ${floor} are not reported.`,
       )
       return false
     }
     return true
   })
+  for (const role of study.roles) {
+    if (role.headcount <= 0 || role.headcount >= floor) continue
+    if (study.teams.some((team) => team.roleId === role.id)) continue
+    suppressed.push(`${role.title} is hidden. Groups under ${floor} are not reported.`)
+  }
 
   const treatment = visible.filter((team) => team.arm === "treatment")
   const control = visible.filter((team) => team.arm === "control")
@@ -295,12 +306,8 @@ export function analyze(study: Study): Report {
   if (!baselinePulse && !study.pulseSkipped && study.metricsLocked) {
     warnings.push("There is no baseline pulse, so employee experience is not in this reading.")
   }
-  for (const wave of study.pulses) {
-    for (const hidden of wave.suppressed) {
-      suppressed.push(
-        `${hidden.arm === "treatment" ? "Rollout" : "Comparison"} ${hidden.construct.toLowerCase()} pulse is hidden (${plural(hidden.n, "response")}).`,
-      )
-    }
+  if (study.pulses.some((wave) => wave.suppressed.length > 0)) {
+    suppressed.push(`A check-in is hidden. Groups under ${floor} are not reported.`)
   }
 
   const autoMapped = study.roles.filter((role) => role.autoMapped).length
@@ -308,7 +315,7 @@ export function analyze(study: Study): Report {
 
   return {
     decision,
-    title: rules.includes("window_open") ? "Still measuring" : readingTitle(primary),
+    title: reportTitle(rules, decision, primary),
     lede: ledeFor(primary, comparison),
     reasons,
     warnings,
@@ -569,7 +576,7 @@ function segmentsFor(study: Study, visible: Team[], floor: number, suppressed: s
       const n = rows.reduce((sum, row) => sum + row.n, 0)
       if (n === 0) return null
       if (n < floor) {
-        suppressed.push(`${SEGMENT_LABEL[id]} adoption is hidden because only ${plural(n, "person")} are in it.`)
+        suppressed.push(`${SEGMENT_LABEL[id]} adoption is hidden. Groups under ${floor} are not reported.`)
         return { id, label: SEGMENT_LABEL[id], n, sessionsPerUser: 0, breadth: 0, primaryDelta: null, suppressed: true }
       }
       return {
@@ -607,7 +614,7 @@ function clustersFromUsage(study: Study, visible: Team[], floor: number, suppres
       const n = rows.reduce((sum, row) => sum + row.n, 0)
       if (n === 0) return null
       if (n < floor) {
-        suppressed.push(`${SEGMENT_LABEL[id]} adoption is hidden because only ${plural(n, "person")} are in it.`)
+        suppressed.push(`${SEGMENT_LABEL[id]} adoption is hidden. Groups under ${floor} are not reported.`)
         return { id, label: SEGMENT_LABEL[id], n, sessionsPerUser: 0, breadth: 0, primaryDelta: null, suppressed: true }
       }
       return {

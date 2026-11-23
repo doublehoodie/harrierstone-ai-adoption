@@ -217,6 +217,7 @@ export function fileNextDay(study: Study): string {
   const open = study.openWeek
   if (!open) return "This rollout is not waiting on another file."
   if (open.day >= 4) {
+    rememberCheckIn(study, open.period, open.invited, open.replies)
     appendPostWeek(study, open.index)
     const next = open.index + 1
     if (next >= study.design.plannedPostWeeks) {
@@ -241,6 +242,39 @@ export function fileNextDay(study: Study): string {
   if (open.day === 2) return "The check-in went out to the first wave."
   if (open.day === 3) return "More check-in replies came in."
   return "Replies are still arriving. The outcome file has not closed the week."
+}
+
+function rememberCheckIn(study: Study, period: string, invited: number, replies: number): void {
+  if (invited < study.privacyFloor || replies <= 0) return
+  const rows = study.checkIns ?? []
+  study.checkIns = [...rows.filter((row) => row.period !== period), { period, invited, replies }]
+}
+
+function writeCheckIns(study: Study, responseRate: number, closedPostWeeks: number): void {
+  const floor = study.privacyFloor
+  const baselineInvited = study.teams
+    .filter((team) => (team.arm === "treatment" || team.arm === "control") && team.headcount >= floor)
+    .reduce((sum, team) => sum + team.headcount, 0)
+  const wave = study.teams
+    .filter((team) => team.arm === "treatment" && team.headcount >= floor)
+    .reduce((sum, team) => sum + team.headcount, 0)
+  study.checkIns = []
+  if (baselineInvited >= floor) {
+    study.checkIns.push({
+      period: addDays(study.design.rolloutDate, -7),
+      invited: baselineInvited,
+      replies: Math.round(baselineInvited * responseRate),
+    })
+  }
+  for (let index = 0; index < closedPostWeeks; index += 1) {
+    if (wave < floor) continue
+    const replies = Math.min(wave, Math.round(wave * responseRate * (0.9 + (index % 3) * 0.04)))
+    study.checkIns.push({
+      period: addDays(study.design.rolloutDate, index * 7),
+      invited: wave,
+      replies,
+    })
+  }
 }
 
 export function writePulse(
@@ -442,6 +476,7 @@ function buildDemo(input: DemoInput): Study {
   const weeks = input.postWeeks ?? study.design.plannedPostWeeks
   fillBaseline(study)
   fillMeasurement(study, weeks)
+  writeCheckIns(study, input.responseRate, weeks)
   writePulse(study, "baseline", addDays(input.rolloutDate, -7), input.responseRate)
   if (weeks >= study.design.plannedPostWeeks) {
     writePulse(study, "followup", addDays(input.rolloutDate, (study.design.plannedPostWeeks - 1) * 7), input.responseRate)

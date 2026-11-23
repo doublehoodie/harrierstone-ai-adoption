@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { receiveNextDay } from "@/app/actions"
 import { feed, nextArrival } from "@/lib/feed"
-import { formatChange, readingClass } from "@/lib/format"
+import { formatChange, formatRange, readingClass } from "@/lib/format"
 import { rolloutWindow } from "@/lib/progress"
 import type { Report } from "@/lib/analysis"
 import type { Study } from "@/lib/types"
@@ -27,10 +27,10 @@ export function WarRoom({ study, report, home = false }: { study: Study; report:
             "Not enough closed weeks for a reading yet."
           ) : (
             <span className={readingClass(primary, report.decision !== "inconclusive")}>
-              {primary.name} is {formatChange(primary.did, primary.unit)} so far.
+              {`${primary.name} is ${formatChange(primary.did, primary.unit)} so far${primary.ciLow != null && primary.ciHigh != null ? ` (95% range ${formatRange(primary.ciLow, primary.ciHigh, primary.unit)})` : ""}.`}
             </span>
           )}{" "}
-          The planned weeks are not all on file.
+          The planned weeks are not all on file. The finding stays unmarked until the planned weeks are in.
         </p>
         {study.openWeek && (
           <p className="text-sm text-muted">

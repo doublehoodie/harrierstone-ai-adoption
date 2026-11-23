@@ -57,6 +57,7 @@ export function blankStudy(input: {
     agents: [],
     bands: [],
     pulses: [],
+    checkIns: [],
     pulseSkipped: false,
     noticePlanned: false,
     amendments: [],
